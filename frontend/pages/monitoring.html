@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CrowdEye AI - Live Camera Zone Monitoring</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20%220%22%20%22100%22%20%22100%22><text y=%22.9em%22 font-size=%2290%22>👁️</text></svg>">
+</head>
+<body>
+  <!-- Top Navigation Bar -->
+  <nav class="navbar">
+    <a href="../index.html" class="nav-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+      </div>
+      <span class="brand-title">CrowdEye AI</span>
+    </a>
+    
+    <div class="nav-links">
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="monitoring.html" class="nav-link active">Monitoring</a>
+      <a href="analytics.html" class="nav-link">Analytics</a>
+      <a href="login.html" class="nav-link">Logout</a>
+    </div>
+
+    <div class="nav-status">
+      <span class="pulse-dot"></span>
+      <span>4 RTSP CHANNELS ACTIVE</span>
+    </div>
+  </nav>
+
+  <main class="container">
+    <header class="page-header">
+      <div class="header-title">
+        <h1>Live Zone Surveillance & Feeds</h1>
+        <p>Real-time visual monitoring matrices awaiting Phase 2 AI detection streams</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" onclick="alert('Stream feeds will be bound to YOLOv8 & DeepSORT inferencing in Phase 2')">
+          Stream Configurations
+        </button>
+      </div>
+    </header>
+
+    <!-- 2x2 Camera Video Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+      
+      <!-- Feed 1: Zone A -->
+      <div class="panel" style="padding: 0; overflow: hidden; position: relative;">
+        <div style="height: 240px; background: #070a10; display: flex; align-items: center; justify-content: center; position: relative;">
+          <!-- Placeholder Grid Lines -->
+          <div style="position: absolute; inset: 0; background: radial-gradient(circle, rgba(56, 189, 248, 0.05) 1px, transparent 1px); background-size: 20px 20px;"></div>
+          <div style="text-align: center; z-index: 10;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5">
+              <path d="M23 7l-7 5 7 5V7z"></path>
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+            </svg>
+            <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">CAM-01 • RTSP Feed Standby</div>
+            <div style="font-size: 0.75rem; color: var(--accent-cyan); margin-top: 2px;">Ready for Phase 2 YOLOv8 Binding</div>
+          </div>
+          <!-- Corner Badges -->
+          <div style="position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.7); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-family: var(--font-mono);">
+            REC • 1080p @ 30FPS
+          </div>
+          <div style="position: absolute; top: 12px; right: 12px;">
+            <span class="badge badge-warning">HIGH DENSITY</span>
+          </div>
+        </div>
+        <div style="padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h3 style="font-size: 1rem; font-family: var(--font-display);">Zone A: Main Turnstiles</h3>
+            <span style="font-size: 0.8rem; color: var(--text-secondary);">Estimated: 480 people • 3.2 ppl/m²</span>
+          </div>
+          <a href="dashboard.html" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.3rem 0.75rem;">View Analytics</a>
+        </div>
+      </div>
+
+      <!-- Feed 2: Zone B -->
+      <div class="panel" style="padding: 0; overflow: hidden; position: relative;">
+        <div style="height: 240px; background: #070a10; display: flex; align-items: center; justify-content: center; position: relative;">
+          <div style="position: absolute; inset: 0; background: radial-gradient(circle, rgba(16, 185, 129, 0.05) 1px, transparent 1px); background-size: 20px 20px;"></div>
+          <div style="text-align: center; z-index: 10;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5">
+              <path d="M23 7l-7 5 7 5V7z"></path>
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+            </svg>
+            <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">CAM-02 • RTSP Feed Standby</div>
+            <div style="font-size: 0.75rem; color: var(--accent-emerald); margin-top: 2px;">Normal Crowd Dynamics</div>
+          </div>
+          <div style="position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.7); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-family: var(--font-mono);">
+            REC • 1080p @ 30FPS
+          </div>
+          <div style="position: absolute; top: 12px; right: 12px;">
+            <span class="badge badge-low">SAFE</span>
+          </div>
+        </div>
+        <div style="padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h3 style="font-size: 1rem; font-family: var(--font-display);">Zone B: Food & Beverage Court</h3>
+            <span style="font-size: 0.8rem; color: var(--text-secondary);">Estimated: 310 people • 1.8 ppl/m²</span>
+          </div>
+          <a href="dashboard.html" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.3rem 0.75rem;">View Analytics</a>
+        </div>
+      </div>
+
+      <!-- Feed 3: Zone C -->
+      <div class="panel" style="padding: 0; overflow: hidden; position: relative;">
+        <div style="height: 240px; background: #070a10; display: flex; align-items: center; justify-content: center; position: relative;">
+          <div style="position: absolute; inset: 0; background: radial-gradient(circle, rgba(239, 68, 68, 0.05) 1px, transparent 1px); background-size: 20px 20px;"></div>
+          <div style="text-align: center; z-index: 10;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5">
+              <path d="M23 7l-7 5 7 5V7z"></path>
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+            </svg>
+            <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">CAM-03 • RTSP Feed Standby</div>
+            <div style="font-size: 0.75rem; color: var(--accent-rose); margin-top: 2px;">Overcrowding Risk Threshold Exceeded</div>
+          </div>
+          <div style="position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.7); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-family: var(--font-mono);">
+            REC • 4K @ 60FPS
+          </div>
+          <div style="position: absolute; top: 12px; right: 12px;">
+            <span class="badge badge-critical">CRITICAL SURGE</span>
+          </div>
+        </div>
+        <div style="padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h3 style="font-size: 1rem; font-family: var(--font-display);">Zone C: Main Stage Front</h3>
+            <span style="font-size: 0.8rem; color: var(--text-secondary);">Estimated: 520 people • 3.8 ppl/m²</span>
+          </div>
+          <a href="dashboard.html" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.3rem 0.75rem;">View Analytics</a>
+        </div>
+      </div>
+
+      <!-- Feed 4: Zone D -->
+      <div class="panel" style="padding: 0; overflow: hidden; position: relative;">
+        <div style="height: 240px; background: #070a10; display: flex; align-items: center; justify-content: center; position: relative;">
+          <div style="position: absolute; inset: 0; background: radial-gradient(circle, rgba(16, 185, 129, 0.05) 1px, transparent 1px); background-size: 20px 20px;"></div>
+          <div style="text-align: center; z-index: 10;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5">
+              <path d="M23 7l-7 5 7 5V7z"></path>
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+            </svg>
+            <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">CAM-04 • RTSP Feed Standby</div>
+            <div style="font-size: 0.75rem; color: var(--accent-emerald); margin-top: 2px;">Evacuation Passage Clear</div>
+          </div>
+          <div style="position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.7); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-family: var(--font-mono);">
+            REC • 1080p @ 30FPS
+          </div>
+          <div style="position: absolute; top: 12px; right: 12px;">
+            <span class="badge badge-low">CLEAR</span>
+          </div>
+        </div>
+        <div style="padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h3 style="font-size: 1rem; font-family: var(--font-display);">Zone D: Emergency Exit Corridor</h3>
+            <span style="font-size: 0.8rem; color: var(--text-secondary);">Estimated: 110 people • 0.9 ppl/m²</span>
+          </div>
+          <a href="dashboard.html" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.3rem 0.75rem;">View Analytics</a>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    CrowdEye AI • Camera Surveillance Matrix • Phase 1
+  </footer>
+</body>
+</html>

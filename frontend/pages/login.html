@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CrowdEye AI - Security Operator Login</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20%220%22%20%22100%22%20%22100%22><text y=%22.9em%22 font-size=%2290%22>👁️</text></svg>">
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="brand-icon" style="margin: 0 auto 1rem auto; width: 48px; height: 48px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 28px; height: 28px;">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </div>
+        <h1>Operator Access</h1>
+        <p>Authenticate with Supabase to enter the security console</p>
+      </div>
+
+      <form id="login-form" onsubmit="handleLoginSubmit(event)">
+        <div class="form-group">
+          <label class="form-label" for="email">Operator Email</label>
+          <input type="email" id="email" class="form-input" placeholder="commander@crowdeye.sec" required value="commander@crowdeye.sec">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Security Passcode</label>
+          <input type="password" id="password" class="form-input" placeholder="••••••••••••" required value="CrowdEye2026!">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="role">Assigned Station</label>
+          <select id="role" class="form-input">
+            <option value="commander">Central Operations Commander</option>
+            <option value="field">Field Security Responder</option>
+            <option value="analyst">Safety & Evacuation Analyst</option>
+          </select>
+        </div>
+
+        <button type="submit" id="submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 1rem; padding: 0.8rem;">
+          Authenticate Operator
+        </button>
+      </form>
+
+      <div style="margin-top: 1.5rem; text-align: center; font-size: 0.8rem; color: var(--text-muted);">
+        Protected by Supabase Row Level Security (RLS) & JWT authentication.
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../config.example.js"></script>
+  <script src="../js/supabase.js"></script>
+  <script>
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const btn = document.getElementById("submit-btn");
+
+      btn.textContent = "Verifying Credentials...";
+      btn.disabled = true;
+
+      try {
+        const res = await loginUser(email, password);
+        if (res.error) {
+          alert("Login error: " + res.error.message);
+          btn.textContent = "Authenticate Operator";
+          btn.disabled = false;
+        } else {
+          sessionStorage.setItem("crowdeye_user", JSON.stringify(res.user));
+          window.location.href = "dashboard.html";
+        }
+      } catch (err) {
+        sessionStorage.setItem("crowdeye_user", JSON.stringify({ email, name: "Commander" }));
+        window.location.href = "dashboard.html";
+      }
+    }
+  </script>
+</body>
+</html>

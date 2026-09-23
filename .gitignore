@@ -1,0 +1,35 @@
+# Environments
+.env
+.env.local
+*.env
+
+# Dependencies & Virtual Envs
+venv/
+env/
+.venv/
+ENV/
+node_modules/
+
+# Python cache & artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# AI Model Weights & Datasets
+*.pt
+*.pth
+*.onnx
+*.weights
+*.bin
+datasets/
+videos/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

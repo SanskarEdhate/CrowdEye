@@ -1,0 +1,1 @@
+"""CrowdEye AI Configuration Module"""

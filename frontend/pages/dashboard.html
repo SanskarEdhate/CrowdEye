@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CrowdEye AI - Security Operations Dashboard</title>
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="../css/style.css">
+  
+  <!-- Leaflet CSS for Venue Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20%220%22%20%22100%22%20%22100%22><text y=%22.9em%22 font-size=%2290%22>👁️</text></svg>">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <nav class="navbar">
+    <a href="../index.html" class="nav-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+      </div>
+      <span class="brand-title">CrowdEye AI</span>
+    </a>
+    
+    <div class="nav-links">
+      <a href="dashboard.html" class="nav-link active">Dashboard</a>
+      <a href="monitoring.html" class="nav-link">Monitoring</a>
+      <a href="analytics.html" class="nav-link">Analytics</a>
+      <a href="login.html" class="nav-link">Logout</a>
+    </div>
+
+    <div class="nav-status">
+      <span class="pulse-dot"></span>
+      <span id="system-status-indicator">STANDBY MODE (PHASE 1)</span>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="container">
+    
+    <!-- Page Header -->
+    <header class="page-header">
+      <div class="header-title">
+        <h1>Command & Safety Dashboard</h1>
+        <p>Real-time crowd telemetry, density analysis, and rapid alert mitigation</p>
+      </div>
+      <div class="header-actions">
+        <select id="event-selector" class="form-input" style="width: auto; padding: 0.5rem 1rem;">
+          <option value="evt-001">Metro Grand Arena 2026</option>
+          <option value="evt-002">Convention Hall Expo</option>
+        </select>
+        <button id="refresh-btn" class="btn btn-secondary" onclick="loadDashboardData()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          Sync Telemetry
+        </button>
+      </div>
+    </header>
+
+    <!-- Key Metrics Cards Grid -->
+    <section class="metrics-grid">
+      <!-- Card 1: Total People -->
+      <div class="metric-card">
+        <div class="card-header-flex">
+          <span class="card-title">Total People</span>
+          <div class="card-icon" style="color: var(--accent-cyan);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="card-value" id="val-total-people">1,420</div>
+        <div class="card-subtext">
+          <span>Active Venue Estimation</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Current Density -->
+      <div class="metric-card warning">
+        <div class="card-header-flex">
+          <span class="card-title">Current Density</span>
+          <div class="card-icon" style="color: var(--accent-amber);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="3" y1="9" x2="21" y2="9"></line>
+              <line x1="9" y1="21" x2="9" y2="9"></line>
+            </svg>
+          </div>
+        </div>
+        <div class="card-value" id="val-current-density">2.4 <span style="font-size: 1rem; color: var(--text-secondary);">ppl/m²</span></div>
+        <div class="card-subtext">
+          <span>Average across monitored zones</span>
+        </div>
+      </div>
+
+      <!-- Card 3: Risk Level -->
+      <div class="metric-card warning">
+        <div class="card-header-flex">
+          <span class="card-title">Risk Level</span>
+          <div class="card-icon" style="color: var(--accent-amber);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+        </div>
+        <div class="card-value" id="val-risk-level">
+          <span class="badge badge-warning" style="font-size: 1.1rem; padding: 0.35rem 0.8rem;">MODERATE</span>
+        </div>
+        <div class="card-subtext">
+          <span>Score: <strong id="val-risk-score" style="color: #fbbf24;">0.42 / 1.0</strong></span>
+        </div>
+      </div>
+
+      <!-- Card 4: Active Alerts -->
+      <div class="metric-card critical">
+        <div class="card-header-flex">
+          <span class="card-title">Active Alerts</span>
+          <div class="card-icon" style="color: var(--accent-rose);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="card-value" id="val-active-alerts" style="color: var(--accent-rose);">2</div>
+        <div class="card-subtext">
+          <span>Immediate security attention required</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Visual Dashboard Section: Charts & Map Split -->
+    <div class="dashboard-grid">
+      
+      <!-- Left Panel: Crowd Density & Flow Chart -->
+      <section class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            Crowd Density & Risk Timeline
+          </h2>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">60-Minute Window</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="densityChart"></canvas>
+        </div>
+      </section>
+
+      <!-- Right Panel: Leaflet Placeholder Map -->
+      <section class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-emerald)" stroke-width="2">
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+              <line x1="8" y1="2" x2="8" y2="18"></line>
+              <line x1="16" y1="6" x2="16" y2="22"></line>
+            </svg>
+            Venue Camera Zones (GIS)
+          </h2>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">Leaflet.js</span>
+        </div>
+        <div id="venue-map"></div>
+      </section>
+
+    </div>
+
+    <!-- Active Incident Alerts Table -->
+    <section class="panel">
+      <div class="panel-header">
+        <h2 class="panel-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-rose)" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          Active Safety Alarms & Congestion Warnings
+        </h2>
+        <span class="badge badge-critical" id="alert-counter-badge">2 Active</span>
+      </div>
+      
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Severity</th>
+              <th>Zone / Location</th>
+              <th>Trigger Reason</th>
+              <th>Logged At</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="alerts-table-body">
+            <tr>
+              <td><span class="badge badge-critical">CRITICAL</span></td>
+              <td><strong>Stage Area</strong> (Zone C)</td>
+              <td>High crowd surge detected (>3.5 ppl/m²)</td>
+              <td>Just now</td>
+              <td><span style="color: #f87171;">Unresolved</span></td>
+              <td><button class="btn btn-secondary" style="padding: 0.25rem 0.65rem; font-size: 0.8rem;">Dispatch Guard</button></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">WARNING</span></td>
+              <td><strong>Main Gate</strong> (Zone A)</td>
+              <td>Bottleneck forming at turnstiles</td>
+              <td>5 mins ago</td>
+              <td><span style="color: #fbbf24;">Investigating</span></td>
+              <td><button class="btn btn-secondary" style="padding: 0.25rem 0.65rem; font-size: 0.8rem;">Open Gate B</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    CrowdEye AI • Hackathon Phase 1 • Real-time Crowd Safety Platform
+  </footer>
+
+  <!-- External Libraries (CDNs) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Application Logic -->
+  <script src="../config.example.js"></script>
+  <script src="../js/supabase.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/app.js"></script>
+</body>
+</html>
