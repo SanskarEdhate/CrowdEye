@@ -6,6 +6,7 @@ from app.routes.crowd import router as crowd_router
 from app.routes.detection import router as detection_router
 from app.routes.tracking import router as tracking_router
 from app.routes.density import router as density_router
+from app.routes.risk import router as risk_router
 from app.websocket.tracking_socket import router as websocket_router
 
 # Initialize FastAPI application
@@ -35,7 +36,10 @@ app.include_router(tracking_router)
 app.include_router(tracking_router, prefix="/api/v1")
 app.include_router(density_router)
 app.include_router(density_router, prefix="/api/v1")
+app.include_router(risk_router)
+app.include_router(risk_router, prefix="/api/v1")
 app.include_router(websocket_router)
+
 
 
 

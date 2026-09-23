@@ -356,6 +356,215 @@
       </div>
     </section>
 
+    <!-- =======================================================================
+         PHASE 5: CROWD RISK PREDICTION & EARLY WARNING ENGINE
+         ======================================================================= -->
+    <section class="panel" style="margin-top: 1.5rem; border: 1px solid rgba(244, 63, 94, 0.3);">
+      <div class="panel-header" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
+        <div>
+          <h2 class="panel-title" style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-primary);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-rose)" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <path d="M12 8v4"></path>
+              <path d="M12 16h.01"></path>
+            </svg>
+            Phase 5: Crowd Risk Prediction & Early Warning Engine
+          </h2>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
+            Explainable AI • 10-second rolling window telemetry • 4-factor deterministic scoring (0–100) • Early warning diagnostics
+          </p>
+        </div>
+        <div style="display: flex; gap: 0.75rem; align-items: center;">
+          <span class="badge" id="risk-engine-badge" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); border: 1px solid var(--accent-emerald);">IDLE / READY</span>
+          <button id="trigger-risk-btn" class="btn btn-secondary" onclick="triggerRiskAnalysis()" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            Analyze Current Risk
+          </button>
+        </div>
+      </div>
+
+      <!-- Formula & Weight Legend -->
+      <div style="background: var(--bg-surface-elevated); border-radius: 8px; padding: 0.75rem 1rem; margin: 1rem 0; display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; font-size: 0.8rem; color: var(--text-secondary);">
+        <span style="font-weight: 600; color: var(--text-primary);">Deterministic Formula:</span>
+        <span><strong>40%</strong> Density</span>
+        <span><strong>25%</strong> Speed</span>
+        <span><strong>20%</strong> Movement Chaos (Circular Statistics)</span>
+        <span><strong>15%</strong> Growth Rate</span>
+        <span style="margin-left: auto; color: var(--accent-cyan); font-weight: 500;">Analysis Window: 10 Seconds</span>
+      </div>
+
+      <!-- Zone Risk Cards Grid (Zones A - F) -->
+      <div id="risk-cards-container" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
+        
+        <!-- Zone A Risk Card -->
+        <div class="risk-card" id="risk-card-A" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <strong style="font-size: 1.05rem; color: var(--accent-cyan);">Zone A</strong>
+            <span class="badge" id="risk-level-A" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald);">LOW</span>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+            <span style="font-size: 1.8rem; font-weight: 800;" id="risk-score-A">15</span>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">/ 100 Risk Index</span>
+          </div>
+          <div style="height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; margin: 0.6rem 0; overflow: hidden;">
+            <div id="risk-bar-A" style="width: 15%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+            <div>Density: <span id="rf-density-A">15%</span></div>
+            <div>Speed: <span id="rf-speed-A">10%</span></div>
+            <div>Chaos: <span id="rf-chaos-A">5%</span></div>
+            <div>Growth: <span id="rf-growth-A">0%</span></div>
+          </div>
+          <div style="background: var(--bg-primary); border-radius: 6px; padding: 0.6rem; font-size: 0.75rem;">
+            <div style="font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem;">Diagnostic Explanations:</div>
+            <ul id="risk-reasons-A" style="margin: 0; padding-left: 1.1rem; color: var(--text-primary); line-height: 1.3;">
+              <li>Normal crowd flow within safety thresholds</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Zone B Risk Card -->
+        <div class="risk-card" id="risk-card-B" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <strong style="font-size: 1.05rem; color: var(--accent-cyan);">Zone B</strong>
+            <span class="badge" id="risk-level-B" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald);">LOW</span>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+            <span style="font-size: 1.8rem; font-weight: 800;" id="risk-score-B">15</span>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">/ 100 Risk Index</span>
+          </div>
+          <div style="height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; margin: 0.6rem 0; overflow: hidden;">
+            <div id="risk-bar-B" style="width: 15%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+            <div>Density: <span id="rf-density-B">15%</span></div>
+            <div>Speed: <span id="rf-speed-B">10%</span></div>
+            <div>Chaos: <span id="rf-chaos-B">5%</span></div>
+            <div>Growth: <span id="rf-growth-B">0%</span></div>
+          </div>
+          <div style="background: var(--bg-primary); border-radius: 6px; padding: 0.6rem; font-size: 0.75rem;">
+            <div style="font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem;">Diagnostic Explanations:</div>
+            <ul id="risk-reasons-B" style="margin: 0; padding-left: 1.1rem; color: var(--text-primary); line-height: 1.3;">
+              <li>Normal crowd flow within safety thresholds</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Zone C Risk Card -->
+        <div class="risk-card" id="risk-card-C" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <strong style="font-size: 1.05rem; color: var(--accent-cyan);">Zone C</strong>
+            <span class="badge" id="risk-level-C" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald);">LOW</span>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+            <span style="font-size: 1.8rem; font-weight: 800;" id="risk-score-C">15</span>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">/ 100 Risk Index</span>
+          </div>
+          <div style="height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; margin: 0.6rem 0; overflow: hidden;">
+            <div id="risk-bar-C" style="width: 15%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+            <div>Density: <span id="rf-density-C">15%</span></div>
+            <div>Speed: <span id="rf-speed-C">10%</span></div>
+            <div>Chaos: <span id="rf-chaos-C">5%</span></div>
+            <div>Growth: <span id="rf-growth-C">0%</span></div>
+          </div>
+          <div style="background: var(--bg-primary); border-radius: 6px; padding: 0.6rem; font-size: 0.75rem;">
+            <div style="font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem;">Diagnostic Explanations:</div>
+            <ul id="risk-reasons-C" style="margin: 0; padding-left: 1.1rem; color: var(--text-primary); line-height: 1.3;">
+              <li>Normal crowd flow within safety thresholds</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Zone D Risk Card -->
+        <div class="risk-card" id="risk-card-D" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <strong style="font-size: 1.05rem; color: var(--accent-cyan);">Zone D</strong>
+            <span class="badge" id="risk-level-D" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald);">LOW</span>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+            <span style="font-size: 1.8rem; font-weight: 800;" id="risk-score-D">15</span>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">/ 100 Risk Index</span>
+          </div>
+          <div style="height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; margin: 0.6rem 0; overflow: hidden;">
+            <div id="risk-bar-D" style="width: 15%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+            <div>Density: <span id="rf-density-D">15%</span></div>
+            <div>Speed: <span id="rf-speed-D">10%</span></div>
+            <div>Chaos: <span id="rf-chaos-D">5%</span></div>
+            <div>Growth: <span id="rf-growth-D">0%</span></div>
+          </div>
+          <div style="background: var(--bg-primary); border-radius: 6px; padding: 0.6rem; font-size: 0.75rem;">
+            <div style="font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem;">Diagnostic Explanations:</div>
+            <ul id="risk-reasons-D" style="margin: 0; padding-left: 1.1rem; color: var(--text-primary); line-height: 1.3;">
+              <li>Normal crowd flow within safety thresholds</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Zone E Risk Card -->
+        <div class="risk-card" id="risk-card-E" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <strong style="font-size: 1.05rem; color: var(--accent-cyan);">Zone E</strong>
+            <span class="badge" id="risk-level-E" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald);">LOW</span>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+            <span style="font-size: 1.8rem; font-weight: 800;" id="risk-score-E">15</span>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">/ 100 Risk Index</span>
+          </div>
+          <div style="height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; margin: 0.6rem 0; overflow: hidden;">
+            <div id="risk-bar-E" style="width: 15%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+            <div>Density: <span id="rf-density-E">15%</span></div>
+            <div>Speed: <span id="rf-speed-E">10%</span></div>
+            <div>Chaos: <span id="rf-chaos-E">5%</span></div>
+            <div>Growth: <span id="rf-growth-E">0%</span></div>
+          </div>
+          <div style="background: var(--bg-primary); border-radius: 6px; padding: 0.6rem; font-size: 0.75rem;">
+            <div style="font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem;">Diagnostic Explanations:</div>
+            <ul id="risk-reasons-E" style="margin: 0; padding-left: 1.1rem; color: var(--text-primary); line-height: 1.3;">
+              <li>Normal crowd flow within safety thresholds</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Zone F Risk Card -->
+        <div class="risk-card" id="risk-card-F" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <strong style="font-size: 1.05rem; color: var(--accent-cyan);">Zone F</strong>
+            <span class="badge" id="risk-level-F" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald);">LOW</span>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+            <span style="font-size: 1.8rem; font-weight: 800;" id="risk-score-F">15</span>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">/ 100 Risk Index</span>
+          </div>
+          <div style="height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; margin: 0.6rem 0; overflow: hidden;">
+            <div id="risk-bar-F" style="width: 15%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+            <div>Density: <span id="rf-density-F">15%</span></div>
+            <div>Speed: <span id="rf-speed-F">10%</span></div>
+            <div>Chaos: <span id="rf-chaos-F">5%</span></div>
+            <div>Growth: <span id="rf-growth-F">0%</span></div>
+          </div>
+          <div style="background: var(--bg-primary); border-radius: 6px; padding: 0.6rem; font-size: 0.75rem;">
+            <div style="font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem;">Diagnostic Explanations:</div>
+            <ul id="risk-reasons-F" style="margin: 0; padding-left: 1.1rem; color: var(--text-primary); line-height: 1.3;">
+              <li>Normal crowd flow within safety thresholds</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
     <!-- Active Incident Alerts Table -->
     <section class="panel">
       <div class="panel-header">
@@ -637,6 +846,169 @@
       });
     }
 
+    // =========================================================================
+    // PHASE 5: CROWD RISK CONTROLLER & WEBSOCKET LISTENER
+    // =========================================================================
+    let riskPollTimer = null;
+
+    async function triggerRiskAnalysis() {
+      const btn = document.getElementById("trigger-risk-btn");
+      const badge = document.getElementById("risk-engine-badge");
+
+      try {
+        btn.disabled = true;
+        btn.innerHTML = "Evaluating Risk...";
+        badge.textContent = "EVALUATING";
+        badge.style.color = "var(--accent-amber)";
+        badge.style.borderColor = "var(--accent-amber)";
+
+        const res = await fetch(`${API_BASE}/risk/analyze`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ camera_id: null })
+        });
+
+        if (!res.ok) throw new Error(`Risk analysis start failed: ${res.statusText}`);
+        const jobData = await res.json();
+        const jobId = jobData.job_id;
+
+        // Poll risk job completion
+        riskPollTimer = setInterval(async () => {
+          try {
+            const statusRes = await fetch(`${API_BASE}/risk/status/${jobId}`);
+            if (statusRes.ok) {
+              const statusData = await statusRes.json();
+              if (statusData.status === "completed") {
+                clearInterval(riskPollTimer);
+                badge.textContent = "RISK UPDATED";
+                badge.style.color = "var(--accent-emerald)";
+                badge.style.borderColor = "var(--accent-emerald)";
+                btn.disabled = false;
+                btn.innerHTML = `
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                  </svg>
+                  Analyze Current Risk
+                `;
+
+                // Fetch latest results
+                const resultRes = await fetch(`${API_BASE}/risk/result/default`);
+                if (resultRes.ok) {
+                  const resultData = await resultRes.json();
+                  renderRiskResults(resultData.zones || []);
+                }
+              } else if (statusData.status === "failed") {
+                clearInterval(riskPollTimer);
+                badge.textContent = "EVAL FAILED";
+                badge.style.color = "var(--accent-rose)";
+                badge.style.borderColor = "var(--accent-rose)";
+                btn.disabled = false;
+                btn.innerHTML = "Analyze Current Risk";
+              }
+            }
+          } catch (err) {
+            console.error("Error polling risk status:", err);
+          }
+        }, 1000);
+
+      } catch (err) {
+        console.error("Error starting risk analysis:", err);
+        btn.disabled = false;
+        btn.innerHTML = "Analyze Current Risk";
+        badge.textContent = "ERROR";
+      }
+    }
+
+    function renderRiskResults(zones) {
+      if (!zones || !Array.isArray(zones)) return;
+
+      const riskColors = {
+        "LOW": { bg: "rgba(16, 185, 129, 0.15)", text: "#10b981", bar: "#10b981" },
+        "MEDIUM": { bg: "rgba(245, 158, 11, 0.15)", text: "#f59e0b", bar: "#f59e0b" },
+        "HIGH": { bg: "rgba(249, 115, 22, 0.15)", text: "#f97316", bar: "#f97316" },
+        "CRITICAL": { bg: "rgba(239, 68, 68, 0.2)", text: "#ef4444", bar: "#ef4444" }
+      };
+
+      zones.forEach(z => {
+        const zoneKey = z.zone;
+        const scoreElem = document.getElementById(`risk-score-${zoneKey}`);
+        const levelElem = document.getElementById(`risk-level-${zoneKey}`);
+        const barElem = document.getElementById(`risk-bar-${zoneKey}`);
+        const reasonsElem = document.getElementById(`risk-reasons-${zoneKey}`);
+
+        const fDens = document.getElementById(`rf-density-${zoneKey}`);
+        const fSpeed = document.getElementById(`rf-speed-${zoneKey}`);
+        const fChaos = document.getElementById(`rf-chaos-${zoneKey}`);
+        const fGrowth = document.getElementById(`rf-growth-${zoneKey}`);
+
+        if (scoreElem) scoreElem.textContent = z.risk_score;
+
+        const colors = riskColors[z.risk_level] || riskColors["LOW"];
+        if (levelElem) {
+          levelElem.textContent = z.risk_level;
+          levelElem.style.background = colors.bg;
+          levelElem.style.color = colors.text;
+        }
+        if (barElem) {
+          barElem.style.width = `${Math.min(100, z.risk_score)}%`;
+          barElem.style.background = colors.bar;
+        }
+
+        if (z.features) {
+          if (fDens) fDens.textContent = `${Math.round(z.features.density)}%`;
+          if (fSpeed) fSpeed.textContent = `${Math.round(z.features.speed)}%`;
+          if (fChaos) fChaos.textContent = `${Math.round(z.features.chaos)}%`;
+          if (fGrowth) fGrowth.textContent = `${Math.round(z.features.growth)}%`;
+        }
+
+        if (reasonsElem && z.reason) {
+          reasonsElem.innerHTML = z.reason.map(r => `<li>${escapeHtml(r)}</li>`).join("");
+        }
+      });
+    }
+
+    // Connect to WebSocket for live early warning push alerts
+    function initRiskWebSocket() {
+      const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const wsHost = window.location.port === "8000" ? window.location.host : "127.0.0.1:8000";
+      const wsUrl = `${wsProtocol}//${wsHost}/ws/tracking`;
+
+      try {
+        const ws = new WebSocket(wsUrl);
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === "risk_update") {
+              const zoneKey = data.zone;
+              const scoreElem = document.getElementById(`risk-score-${zoneKey}`);
+              const levelElem = document.getElementById(`risk-level-${zoneKey}`);
+              const barElem = document.getElementById(`risk-bar-${zoneKey}`);
+              const reasonsElem = document.getElementById(`risk-reasons-${zoneKey}`);
+
+              if (scoreElem) scoreElem.textContent = data.risk_score;
+              if (levelElem) {
+                levelElem.textContent = data.risk_level;
+                levelElem.style.color = data.risk_level === "CRITICAL" ? "#ef4444" : "#f97316";
+              }
+              if (barElem) {
+                barElem.style.width = `${data.risk_score}%`;
+                barElem.style.background = data.risk_level === "CRITICAL" ? "#ef4444" : "#f97316";
+              }
+              if (reasonsElem && data.reasons) {
+                reasonsElem.innerHTML = data.reasons.map(r => `<li>${escapeHtml(r)}</li>`).join("");
+              }
+            }
+          } catch (e) {
+            // Not a JSON risk frame
+          }
+        };
+      } catch (err) {
+        console.debug("Risk WebSocket connection standby:", err);
+      }
+    }
+
     // Initialize default grid view on canvas
     window.addEventListener("load", () => {
       const canvas = document.getElementById("zoneHeatmapCanvas");
@@ -645,8 +1017,10 @@
         ctx.fillStyle = "#070a10";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
+      initRiskWebSocket();
     });
   </script>
 </body>
 </html>
+
 

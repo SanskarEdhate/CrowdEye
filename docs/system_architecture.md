@@ -145,6 +145,55 @@ This document specifies the technical blueprint for the **CrowdEye AI** platform
           [ Supabase: density_jobs ]        [ Frontend Dashboard: Zone Cards & Canvas Heatmap ]
 ```
 
+---
+
+## 1.3 Phase 5: Crowd Risk Prediction & Early Warning Pipeline Flow
+
+```
+[ CCTV Video Stream / Stored Telemetry ]
+            |
+            v
+[ YOLOv8 Person Detection (COCO Class 0) ]
+            |
+            v
+[ DeepSORT Multi-Object Tracking (MobileNet) ]
+            |
+            v
+[ Movement Features (8-Way Direction, px/s Velocity) ]
+            |
+            v
+[ Density Engine (Perspective Homography, Zone Mapping A-F) ]
+            |
+            v
+[ 10-Second Temporal Rolling Window Aggregation ]
+            |
+            v
+[ FeatureExtractor (Normalized 0 - 100) ]
+  - Density Norm: (people / capacity) * 100
+  - Growth Rate Norm: min(100, (current - prev)/prev * 100)
+  - Speed Norm: (current_speed / 150 px/s) * 100
+  - Chaos Norm: Circular Statistics (1 - R) * 100
+            |
+            v
+[ RiskEngine: Deterministic Weighted Score (0 - 100) ]
+  Score = 0.40*Density + 0.25*Speed + 0.20*Chaos + 0.15*Growth
+            |
+            v
+[ 4-Tier Risk Classification: LOW (0-30), MEDIUM (31-60), HIGH (61-80), CRITICAL (81-100) ]
+            |
+            v
+[ RiskExplainer: Diagnostic Human-Readable Safety Justifications ]
+            |
+      +-----+-------------------------------+
+      |                                     |
+      v (Persistent Database)               v (Live Push & REST)
+[ Supabase: crowd_risk ]             [ WebSocket: /ws/tracking (risk_update) ]
+      |                                     |
+      v                                     v
+[ Supabase: risk_jobs ]              [ Frontend Dashboard: Risk Monitoring Panel ]
+```
+
+
 
 ```
 [ CCTV Video / Recording ]

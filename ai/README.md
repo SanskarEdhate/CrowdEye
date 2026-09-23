@@ -235,4 +235,51 @@ ai/
   - Outputs advisory confirmation: `{"estimated_count": int, "confidence": "experimental"}`.
 - **Pretrained Checkpoint Reference**: Trained on ShanghaiTech Part A (dense) and Part B (moderate) crowd counting benchmarks (`ai/models/csrnet_shanghaitech.pth`).
 
+---
+
+## 8. Phase 5: Crowd Risk Prediction + Early Warning Engine
+
+Phase 5 introduces deterministic, explainable safety risk modeling over rolling 10-second temporal telemetry windows.
+
+### 8.1 Architecture Overview
+
+```
+ai/
+├── risk/
+│   ├── __init__.py           # Exports FeatureExtractor, RiskEngine, RiskExplainer, BaseRiskModel
+│   ├── feature_extractor.py  # 10s temporal window normalization (Density, Growth, Speed, Chaos)
+│   ├── risk_engine.py        # Deterministic weighted formula & 4-tier level classification
+│   ├── risk_explainer.py     # Diagnostic human-readable safety justifications
+│   └── risk_model.py         # Extensible BaseRiskModel interface for future ML algorithms
+```
+
+### 8.2 Deterministic Risk Formula & Feature Normalization
+Every feature is strictly normalized into a uniform $[0.0, 100.0]$ domain:
+1. **Density ($D$)**:
+   $$\text{density\_norm} = \min\left(100.0, \; \frac{\text{people\_count}}{\text{zone\_capacity}} \times 100\right)$$
+2. **Growth Rate ($G$)**:
+   $$\text{growth\_rate} = \frac{\text{current\_people} - \text{previous\_people}}{\max(1, \text{previous\_people})} \times 100, \quad \text{growth\_norm} = \max(0.0, \min(100.0, \text{growth\_rate}))$$
+3. **Movement Speed ($S$)**:
+   $$\text{speed\_norm} = \min\left(100.0, \; \frac{\text{current\_speed}}{\text{max\_expected\_speed}} \times 100\right) \quad (\text{where } \text{max\_expected\_speed} = 150.0\text{ px/s})$$
+4. **Movement Chaos ($C$) using Circular Statistics**:
+   Standard linear variance $\text{Var}(\theta)$ is flawed for angular data because $0 \equiv 2\pi$. Circular statistics resolves this via the mean resultant vector length $R$:
+   $$C_x = \sum_{i=1}^n \cos \theta_i, \quad S_y = \sum_{i=1}^n \sin \theta_i, \quad R = \frac{\sqrt{C_x^2 + S_y^2}}{n}$$
+   $$\text{chaos\_norm} = (1.0 - R) \times 100$$
+   *(Pure unidirectional crowd yields $R = 1.0 \implies \text{Chaos} = 0\%$; opposing counter-flow yields $R = 0.0 \implies \text{Chaos} = 100\%$)*.
+
+### 8.3 Composite Risk Formula
+$$\text{Risk Score} = 0.40 \times D + 0.25 \times S + 0.20 \times C + 0.15 \times G$$
+
+### 8.4 4-Tier Safety Levels
+- `0 - 30`: **`LOW`** (Routine venue conditions; normal flow)
+- `31 - 60`: **`MEDIUM`** (Moderate accumulation or growth; monitor corridors)
+- `61 - 80`: **`HIGH`** (Dangerous congestion forming; dispatch marshals)
+- `81 - 100`: **`CRITICAL`** (Imminent crowd crush / severe bottleneck early warning)
+
+### 8.5 Risk Prediction Limitations
+- **Early Warning Only**: The model assesses *potential crowd safety risk*; it does not claim to detect accidents or stampedes in progress.
+- **Explainability**: Calculation is 100% deterministic and transparent, avoiding uninterpretable black-box ML outputs.
+- **Future ML Expansion**: `ai/risk/risk_model.py` provides abstract `BaseRiskModel.predict(features)` ready for future Random Forest, XGBoost, or LSTM models.
+
+
 

@@ -76,8 +76,45 @@ class TrackingConnectionManager:
         except Exception:
             pass
 
+    async def broadcast_risk(self, camera_id: str, risk_payload: Dict[str, Any]):
+        """
+        Broadcasts real-time crowd risk alerts & early warnings.
+        Payload format:
+        {
+            "type": "risk_update",
+            "camera_id": str,
+            "zone": "A",
+            "risk_score": 85,
+            "risk_level": "CRITICAL",
+            "reasons": [...]
+        }
+        """
+        message = json.dumps(risk_payload)
+        targets = set(self.broadcast_connections)
+        disconnected = []
+        for ws in targets:
+            try:
+                await ws.send_text(message)
+            except Exception:
+                disconnected.append(ws)
+
+        for ws in disconnected:
+            self.disconnect(ws)
+
+    def sync_broadcast_risk(self, camera_id: str, risk_payload: Dict[str, Any]):
+        import asyncio
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                asyncio.run_coroutine_threadsafe(self.broadcast_risk(camera_id, risk_payload), loop)
+            else:
+                loop.run_until_complete(self.broadcast_risk(camera_id, risk_payload))
+        except Exception:
+            pass
+
 
 tracking_manager = TrackingConnectionManager()
+
 
 
 @router.websocket("/ws/tracking")
