@@ -1,52 +1,123 @@
-# Environments
+# =============================================================================
+# CrowdEye AI - Git Ignore Configuration
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Environment & Secrets (NEVER commit secrets or credentials)
+# -----------------------------------------------------------------------------
 .env
-.env.local
+.env.*
+!.env.example
 *.env
 backend/.env
+ai_worker/.env
 
-# Dependencies & Virtual Envs
-venv/
-env/
-.venv/
-ENV/
-node_modules/
-
-# Python cache & artifacts
+# -----------------------------------------------------------------------------
+# Python Bytecode & Build Artifacts
+# -----------------------------------------------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+
+# -----------------------------------------------------------------------------
+# Testing & Code Coverage
+# -----------------------------------------------------------------------------
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
 
-# AI Model Weights & Models Directory
+# -----------------------------------------------------------------------------
+# Virtual Environments & Package Managers
+# -----------------------------------------------------------------------------
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+node_modules/
+package-lock.json
+
+# -----------------------------------------------------------------------------
+# AI Model Weights & Checkpoints (Excluded due to GitHub file size limits)
+# -----------------------------------------------------------------------------
 *.pt
 *.pth
 *.onnx
 *.weights
 *.bin
+*.tflite
+*.engine
 models/
 ai/models/
 yolov8n.pt
 
-# Datasets & Videos
+# -----------------------------------------------------------------------------
+# Datasets, Video Media & Test Captures
+# -----------------------------------------------------------------------------
 datasets/
-videos/
+videos/*
 !videos/.gitkeep
+videos/input/*
+!videos/input/.gitkeep
 *.mp4
 *.avi
+*.mov
+*.mkv
+*.webm
+*.flv
+*.m4v
+
+# Scratch Temporary Output Files
 scratch/*.mp4
 scratch/*.avi
 scratch/*.jpg
+scratch/*.jpeg
 scratch/*.png
+scratch/*.csv
+scratch/*.json
 
-# Logs
-logs/*.log
+# -----------------------------------------------------------------------------
+# Application Logs (Keep directory structure, ignore rotating log files)
+# -----------------------------------------------------------------------------
+*.log
+logs/*
 !logs/.gitkeep
 
-# IDE & OS
+# -----------------------------------------------------------------------------
+# IDE, Editor & OS Metadata
+# -----------------------------------------------------------------------------
 .vscode/
 .idea/
+*.sublime-project
+*.sublime-workspace
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+desktop.ini
+*.tmp
+*.bak
+*.swp
+*~
