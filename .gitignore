@@ -19,14 +19,20 @@ __pycache__/
 .coverage
 htmlcov/
 
-# AI Model Weights & Datasets
+# AI Model Weights & Models Directory
 *.pt
 *.pth
 *.onnx
 *.weights
 *.bin
+models/
+ai/models/
+yolov8n.pt
+
+# Datasets & Videos
 datasets/
 videos/
+!videos/.gitkeep
 
 # IDE & OS
 .vscode/

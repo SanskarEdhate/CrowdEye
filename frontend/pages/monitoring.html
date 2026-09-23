@@ -46,6 +46,113 @@
       </div>
     </header>
 
+    <!-- PHASE 2: AI Video Ingestion & Person Detection Section -->
+    <section class="panel" style="margin-bottom: 2rem; border-color: rgba(56, 189, 248, 0.3); background: linear-gradient(180deg, rgba(20, 28, 46, 0.9), rgba(15, 21, 35, 0.9));">
+      <div class="panel-header">
+        <h2 class="panel-title" style="color: var(--accent-cyan);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          YOLOv8 AI Video Ingestion & Crowd Detection
+        </h2>
+        <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">
+          Phase 2 Active
+        </span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; align-items: start;">
+        <!-- Upload Form -->
+        <div>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+            Upload CCTV video or crowd recording (.mp4, .avi, .mov). The backend will process frames through YOLOv8, detect people, calculate counts, and persist final telemetry into Supabase.
+          </p>
+
+          <form id="video-upload-form" onsubmit="handleVideoUpload(event)">
+            <div class="form-group">
+              <label class="form-label" for="video-file">Select Video File</label>
+              <input type="file" id="video-file" class="form-input" accept="video/mp4,video/x-m4v,video/*" required style="padding: 0.5rem;">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="camera-select">Assign to Camera Zone (Optional)</label>
+              <select id="camera-select" class="form-input">
+                <option value="">Auto-assign (First available venue camera)</option>
+                <option value="cam-stage">Stage Area (CAM-03)</option>
+                <option value="cam-gate">Main Gate (CAM-01)</option>
+                <option value="cam-food">Food Court (CAM-02)</option>
+                <option value="cam-exit">Emergency Exit (CAM-04)</option>
+              </select>
+            </div>
+
+            <button type="submit" id="upload-submit-btn" class="btn btn-primary" style="width: 100%; padding: 0.75rem;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              Upload & Run YOLOv8 Detection
+            </button>
+          </form>
+        </div>
+
+        <!-- Processing Status & Results Box -->
+        <div id="job-status-container" style="background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1.25rem;">
+          <h3 style="font-size: 1rem; font-family: var(--font-display); margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+            <span>Processing Pipeline Status</span>
+            <span id="job-badge" class="badge badge-low" style="display: none;">STANDBY</span>
+          </h3>
+
+          <!-- Idle State -->
+          <div id="job-idle" style="text-align: center; padding: 2rem 1rem; color: var(--text-muted); font-size: 0.9rem;">
+            No video upload in progress. Choose a video file on the left to begin AI analysis.
+          </div>
+
+          <!-- Progress State -->
+          <div id="job-progress-wrapper" style="display: none;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.4rem;">
+              <span id="job-status-text">Processing: 0%</span>
+              <span id="job-id-display" style="font-family: var(--font-mono); color: var(--accent-cyan);">Job: -</span>
+            </div>
+            <!-- Progress Bar -->
+            <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; margin-bottom: 1rem;">
+              <div id="progress-bar-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, #0284c7, #38bdf8); transition: width 0.3s ease;"></div>
+            </div>
+            <p id="job-status-sub" style="font-size: 0.8rem; color: var(--text-secondary);">Reading video frames and applying YOLOv8 inference...</p>
+          </div>
+
+          <!-- Results State -->
+          <div id="job-result-wrapper" style="display: none; margin-top: 1rem; border-top: 1px solid var(--border-subtle); padding-top: 1rem;">
+            <div style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">
+              Detection Completed
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+              <div style="background: var(--bg-surface); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-subtle);">
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Detected People</div>
+                <div id="res-detected-people" style="font-size: 1.6rem; font-weight: 700; color: #38bdf8; font-family: var(--font-display);">0</div>
+              </div>
+              <div style="background: var(--bg-surface); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-subtle);">
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Max Peak Count</div>
+                <div id="res-max-people" style="font-size: 1.6rem; font-weight: 700; color: #f59e0b; font-family: var(--font-display);">0</div>
+              </div>
+              <div style="background: var(--bg-surface); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-subtle);">
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Total Frames</div>
+                <div id="res-total-frames" style="font-size: 1.1rem; font-weight: 600; font-family: var(--font-mono);">0</div>
+              </div>
+              <div style="background: var(--bg-surface); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-subtle);">
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Supabase Status</div>
+                <div id="res-supabase-status" style="font-size: 0.85rem; font-weight: 600; color: #10b981; margin-top: 4px;">Logged in crowd_logs</div>
+              </div>
+            </div>
+            <div style="margin-top: 1rem; text-align: right;">
+              <a href="dashboard.html" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">
+                View on Dashboard
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- 2x2 Camera Video Grid -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
       
@@ -167,7 +274,150 @@
   </main>
 
   <footer class="footer">
-    CrowdEye AI • Camera Surveillance Matrix • Phase 1
+    CrowdEye AI • Camera Surveillance Matrix • Phase 2
   </footer>
+
+  <script src="../config.js"></script>
+  <script src="../js/api.js"></script>
+  <script>
+    let activePollInterval = null;
+
+    async function handleVideoUpload(event) {
+      event.preventDefault();
+      const fileInput = document.getElementById("video-file");
+      const cameraSelect = document.getElementById("camera-select");
+      const submitBtn = document.getElementById("upload-submit-btn");
+
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert("Please select a video file first.");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append("file", file);
+      if (cameraSelect.value) {
+        formData.append("camera_id", cameraSelect.value);
+      }
+
+      // UI updates
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `Uploading Video (${Math.round(file.size / 1024)} KB)...`;
+
+      document.getElementById("job-idle").style.display = "none";
+      document.getElementById("job-progress-wrapper").style.display = "block";
+      document.getElementById("job-result-wrapper").style.display = "none";
+
+      const badge = document.getElementById("job-badge");
+      badge.style.display = "inline-flex";
+      badge.className = "badge badge-warning";
+      badge.textContent = "QUEUED";
+
+      document.getElementById("job-status-text").textContent = "Uploading & Enqueuing...";
+      document.getElementById("progress-bar-fill").style.width = "5%";
+
+      try {
+        const baseUrl = (typeof API_CONFIG !== "undefined" && API_CONFIG.baseUrl) ? API_CONFIG.baseUrl : "http://127.0.0.1:8000";
+        const response = await fetch(`${baseUrl}/detection/video`, {
+          method: "POST",
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error(`Upload failed HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const jobId = data.job_id;
+        document.getElementById("job-id-display").textContent = `Job: ${jobId}`;
+        badge.textContent = "PROCESSING";
+
+        // Start status polling
+        pollJobStatus(jobId);
+
+      } catch (err) {
+        console.error("Upload error:", err);
+        alert("Upload error: " + err.message);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = "Upload & Run YOLOv8 Detection";
+        badge.className = "badge badge-critical";
+        badge.textContent = "FAILED";
+      }
+    }
+
+    function pollJobStatus(jobId) {
+      if (activePollInterval) clearInterval(activePollInterval);
+
+      const baseUrl = (typeof API_CONFIG !== "undefined" && API_CONFIG.baseUrl) ? API_CONFIG.baseUrl : "http://127.0.0.1:8000";
+
+      activePollInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`${baseUrl}/detection/status/${jobId}`);
+          if (!res.ok) return;
+
+          const data = await res.json();
+          const progress = data.progress || 0;
+          const status = (data.status || "").toLowerCase();
+
+          // Update progress UI
+          document.getElementById("progress-bar-fill").style.width = `${progress}%`;
+          document.getElementById("job-status-text").textContent = `Processing: ${progress}%`;
+
+          if (status === "completed") {
+            clearInterval(activePollInterval);
+            fetchFinalJobResult(jobId);
+          } else if (status === "failed") {
+            clearInterval(activePollInterval);
+            const badge = document.getElementById("job-badge");
+            badge.className = "badge badge-critical";
+            badge.textContent = "FAILED";
+            document.getElementById("job-status-sub").textContent = "Error: " + (data.message || "Detection failed");
+            document.getElementById("upload-submit-btn").disabled = false;
+            document.getElementById("upload-submit-btn").innerHTML = "Upload & Run YOLOv8 Detection";
+          }
+        } catch (pollErr) {
+          console.warn("Polling warning:", pollErr);
+        }
+      }, 1000);
+    }
+
+    async function fetchFinalJobResult(jobId) {
+      const baseUrl = (typeof API_CONFIG !== "undefined" && API_CONFIG.baseUrl) ? API_CONFIG.baseUrl : "http://127.0.0.1:8000";
+      try {
+        const res = await fetch(`${baseUrl}/detection/result/${jobId}`);
+        const result = await res.json();
+
+        // Update UI
+        const badge = document.getElementById("job-badge");
+        badge.className = "badge badge-low";
+        badge.textContent = "COMPLETED";
+
+        document.getElementById("job-status-text").textContent = "Completed (100%)";
+        document.getElementById("job-status-sub").textContent = `Processed ${result.total_frames || 0} frames in ${result.duration || 0}s duration.`;
+
+        document.getElementById("res-detected-people").textContent = result.people_count || result.average_people || 0;
+        document.getElementById("res-max-people").textContent = result.max_people || result.people_count || 0;
+        document.getElementById("res-total-frames").textContent = result.total_frames || 0;
+
+        const supStatus = document.getElementById("res-supabase-status");
+        if (result.supabase_logged) {
+          supStatus.textContent = "Logged in crowd_logs";
+          supStatus.style.color = "#10b981";
+        } else {
+          supStatus.textContent = "Standby (Local Result)";
+          supStatus.style.color = "#94a3b8";
+        }
+
+        document.getElementById("job-result-wrapper").style.display = "block";
+
+      } catch (err) {
+        console.error("Error fetching job result:", err);
+      } finally {
+        const submitBtn = document.getElementById("upload-submit-btn");
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = "Upload & Run YOLOv8 Detection";
+      }
+    }
+  </script>
 </body>
 </html>

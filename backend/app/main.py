@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config.settings import settings
 from app.routes.health import router as health_router
 from app.routes.crowd import router as crowd_router
+from app.routes.detection import router as detection_router
 
 # Initialize FastAPI application
 app = FastAPI(
@@ -25,6 +26,8 @@ app.add_middleware(
 # Include Route Modules
 app.include_router(health_router)
 app.include_router(crowd_router)
+app.include_router(detection_router)
+app.include_router(detection_router, prefix="/api/v1")
 
 
 @app.get("/")

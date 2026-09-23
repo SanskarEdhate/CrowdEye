@@ -10,32 +10,64 @@ This document specifies the technical blueprint for the **CrowdEye AI** platform
 +-------------------------------------------------------------+
 |                      PRESENTATION TIER                      |
 |                  Vanilla HTML5 / CSS3 / JS                  |
-|     (Dashboard, Leaflet.js GIS, Chart.js Telemetry)        |
+|   (Dashboard, Monitoring Upload, Leaflet GIS, Chart.js)    |
 +------------------------------+------------------------------+
                                |
-                               | REST (Fetch API) / WebSockets
+                               | Multipart Video Upload / Status Polling
                                v
 +-------------------------------------------------------------+
 |                     APPLICATION TIER                        |
 |                     FastAPI + Uvicorn                       |
-|   (Authentication, Health, Crowd Telemetry API, CORS)       |
+|   (POST /detection/video, GET /status, BackgroundTasks)     |
 +------------------------------+------------------------------+
                                |
-                               | Supabase Client (Service Key)
+                               | Spawns Background Job
+                               v
++-------------------------------------------------------------+
+|                   AI PERCEPTION WORKER (Phase 2)            |
+|         OpenCV Video Reader  -->  YOLOv8 Detector           |
+|         (Frame Extraction)        (Person Bounding Boxes)   |
++------------------------------+------------------------------+
+                               |
+                               | Telemetry Ingestion (Service Role)
                                v
 +-------------------------------------------------------------+
 |                        DATA TIER                            |
 |                   Supabase PostgreSQL                       |
 |   (users, events, cameras, crowd_logs, alerts + RLS)        |
-+------------------------------+------------------------------+
-                               ^
-                               | Telemetry Ingestion (Service Role)
-                               |
 +-------------------------------------------------------------+
-|                   AI PERCEPTION TIER (Phase 2)              |
-|        YOLOv8  +  DeepSORT  +  CSRNet  +  Risk Engine       |
-|            (RTSP / CCTV Video Stream Ingestion)             |
-+-------------------------------------------------------------+
+```
+
+---
+
+## 1.1 Phase 2 Video Ingestion Pipeline Flow
+
+```
+[ CCTV Video / Recording ]
+            |
+            v
+[ FastAPI: POST /detection/video ]
+            |
+            v
+[ JobService: Create job_id, Status: queued ]
+            |
+            v
+[ FastAPI BackgroundTasks Worker ]
+            |
+            v
+[ OpenCV cv2.VideoCapture (Headless Frame Reader) ]
+            |
+            v
+[ YOLOv8 Person Detection (COCO Class 0, Conf >= 0.45) ]
+            |
+            v
+[ Aggregation: Headcount, Avg People, Max People, Duration ]
+            |
+            v
+[ Supabase crowd_logs Insertion (status: 'DETECTED') ]
+            |
+            v
+[ Frontend Client Status Polling & Result Display ]
 ```
 
 ---
