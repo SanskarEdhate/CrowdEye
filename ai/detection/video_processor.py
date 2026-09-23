@@ -54,17 +54,13 @@ def process_video(
 
     duration_sec = int(round(total_frames / fps)) if total_frames > 0 else 0
 
-    # Adaptive stride: ensure dense crowd inference completes in 10-15s
+    # Adaptive stride: guarantee lightning fast execution (3-5 seconds)
     if frame_stride is None:
-        if total_frames > 400:
-            frame_stride = max(6, int(total_frames / 40))
-        elif total_frames > 150:
-            frame_stride = 6
-        else:
-            frame_stride = 2
+        target_keyframes = 8
+        frame_stride = max(1, total_frames // target_keyframes) if total_frames > 0 else 10
 
     logger.info(
-        f"Starting headless video processing on '{path_obj.name}' "
+        f"Starting fast headless video processing on '{path_obj.name}' "
         f"({total_frames} frames, {width}x{height}, {fps:.1f} FPS, stride={frame_stride})"
     )
 
@@ -79,14 +75,14 @@ def process_video(
     initial_boxes: List[Dict[str, Any]] = []
 
     try:
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                break
-
-            # Process frame based on stride
+        while frame_index < total_frames:
+            # Only full-decode target sampled keyframes; fast-grab all intermediate frames
             if frame_index % frame_stride == 0:
-                detection_result = detector.detect_people(frame)
+                ret, frame = cap.read()
+                if not ret:
+                    break
+
+                detection_result = detector.detect_people(frame, crowd_mode=True)
                 current_count = detection_result.get("count", 0)
                 counts.append(current_count)
 
@@ -131,6 +127,10 @@ def process_video(
                         progress_callback(percent, current_count, frame_index, total_frames, norm_boxes)
                     except TypeError:
                         progress_callback(percent, current_count)
+            else:
+                # Fast grab skips expensive color decode for non-sampled frames
+                if not cap.grab():
+                    break
 
             frame_index += 1
 

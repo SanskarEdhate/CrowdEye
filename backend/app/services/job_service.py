@@ -29,7 +29,7 @@ def _save_jobs_to_disk():
     try:
         JOBS_FILE.parent.mkdir(parents=True, exist_ok=True)
         with open(JOBS_FILE, "w", encoding="utf-8") as f:
-            json.dump(_jobs, f, indent=2)
+            json.dump(_jobs, f, separators=(",", ":"))
     except Exception as e:
         logger.warning(f"Could not save jobs to {JOBS_FILE}: {e}")
 
@@ -107,7 +107,15 @@ class JobService:
             job[k] = v
 
         job["updated_at"] = datetime.utcnow().isoformat()
-        _save_jobs_to_disk()
+        
+        # Avoid blocking disk I/O on every sampled video frame; persist only on state transitions or completion
+        should_persist = (
+            kwargs.get("persist", False)
+            or status is not None
+            or job.get("status") in (JobStatus.COMPLETED.value, JobStatus.FAILED.value, "completed", "failed")
+        )
+        if should_persist:
+            _save_jobs_to_disk()
         return True
 
     @staticmethod

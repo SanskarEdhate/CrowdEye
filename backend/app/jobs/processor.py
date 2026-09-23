@@ -27,6 +27,12 @@ def run_video_processing_job(
     JobService.update_job(job_id, status=JobStatus.PROCESSING, progress=5)
 
     try:
+        import time
+        import importlib
+        import ai.detection.yolo_detector
+        import ai.detection.video_processor
+        importlib.reload(ai.detection.yolo_detector)
+        importlib.reload(ai.detection.video_processor)
         from ai.detection.video_processor import process_video
 
         def on_progress(percent: int, current_count: int, frame_idx: int = 0, total_f: int = 0, boxes = None):
@@ -41,10 +47,12 @@ def run_video_processing_job(
             )
 
         # Execute headless video inference
+        t_infer_start = time.time()
         summary = process_video(
             video_path=video_path,
             progress_callback=on_progress
         )
+        logger.info(f"[Job {job_id}] Headless process_video took: {time.time() - t_infer_start:.2f}s")
 
         JobService.update_job(job_id, progress=95)
 
