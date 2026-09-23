@@ -68,6 +68,34 @@
       </div>
     </header>
 
+    <!-- TASK 15: HACKATHON LIVE DEMO FLOW CONTROLLER -->
+    <div style="background: linear-gradient(135deg, rgba(20, 28, 46, 0.95), rgba(30, 41, 59, 0.95)); border: 1px solid var(--accent-cyan); border-radius: 12px; padding: 1rem 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-glow); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--accent-cyan);"></span>
+          <strong style="color: var(--accent-cyan); font-family: var(--font-display); font-size: 1.05rem;">Hackathon Live Demo Controller (Phase 7)</strong>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">
+          Execute live 8-step safety scenario: Detect Crowd → Heatmap → Risk Surge → Auto Alert → Operator Resolve
+        </p>
+      </div>
+
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="triggerDemoScenario('low')">
+          🟢 1. Safe Crowd
+        </button>
+        <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-color: var(--accent-amber); color: var(--accent-amber);" onclick="triggerDemoScenario('medium')">
+          🟡 2. Density Influx
+        </button>
+        <button class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background: var(--accent-rose); border-color: var(--accent-rose);" onclick="triggerDemoScenario('critical')">
+          🔴 3. Trigger Critical Surge
+        </button>
+        <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="runAutomatedDemoSequence()">
+          ▶ Auto Demo Sequence
+        </button>
+      </div>
+    </div>
+
     <!-- SECTION 1: OVERVIEW CARDS (TASK 10) -->
     <section class="metrics-grid">
       <!-- Card 1: Active Cameras -->
@@ -1245,6 +1273,38 @@
       } catch (err) {
         console.debug("Realtime WebSocket connection standby:", err);
       }
+    }
+
+    // TASK 15: HACKATHON DEMO FLOW CONTROLLERS
+    async function triggerDemoScenario(scenario) {
+      try {
+        const res = await fetch(`${API_BASE}/demo/scenario`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-User-Role": currentRole
+          },
+          body: JSON.stringify({ scenario: scenario })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        refreshSecurityData();
+      } catch (err) {
+        console.error("Demo scenario trigger error:", err);
+      }
+    }
+
+    async function runAutomatedDemoSequence() {
+      // Step 1: Low crowd (normal)
+      await triggerDemoScenario('low');
+      setTimeout(async () => {
+        // Step 2: Medium crowd (influx)
+        await triggerDemoScenario('medium');
+        setTimeout(async () => {
+          // Step 3: Critical surge (alarm triggered!)
+          await triggerDemoScenario('critical');
+        }, 3000);
+      }, 3000);
     }
 
     // Initialize default grid view on canvas

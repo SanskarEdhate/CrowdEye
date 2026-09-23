@@ -1,5 +1,5 @@
 import time
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Any
 from collections import deque
 
 
@@ -15,10 +15,10 @@ class TrackHistory:
         self._history: Dict[int, deque] = {}
         self._last_seen: Dict[int, float] = {}
 
-    def add_point(self, person_id: int, x: float, y: float, timestamp: Optional[float] = None) -> None:
+    def add_point(self, person_id: int, x: float, y: float, timestamp: Optional[float] = None) -> Dict[str, Any]:
         """
-        Records a new (x, y) centroid position for a person ID with a timestamp.
-        Automatically purges observations older than max_history_seconds.
+        TASK 1: Records a new position using wall-clock timestamp.
+        Returns detection record with timestamp, person_position, person_id.
         """
         now = timestamp if timestamp is not None else time.time()
         self._last_seen[person_id] = now
@@ -33,6 +33,12 @@ class TrackHistory:
         cutoff = now - self.max_history_seconds
         while queue and queue[0][2] < cutoff:
             queue.popleft()
+
+        return {
+            "timestamp": now,
+            "person_position": [float(x), float(y)],
+            "person_id": int(person_id)
+        }
 
     def get_history(self, person_id: int) -> List[Tuple[float, float, float]]:
         """

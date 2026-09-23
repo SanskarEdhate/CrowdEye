@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException, Body, Request
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel, Field
 from app.services.camera_service import CameraService
-from app.auth.security import require_admin, require_operator
+from app.auth.auth import require_admin, require_operator
+from app.config.rate_limiter import limiter
 
 router = APIRouter(tags=["Camera Management"])
 
@@ -28,7 +29,9 @@ class CameraUpdateRequest(BaseModel):
 
 @router.post("/cameras", response_model=Dict[str, Any], status_code=201)
 @router.post("/api/v1/cameras", response_model=Dict[str, Any], status_code=201)
+@limiter.limit("300/minute")
 def create_camera(
+    request: Request,
     payload: CameraCreateRequest,
     user: Dict[str, Any] = Depends(require_admin)
 ):
@@ -50,7 +53,8 @@ def create_camera(
 
 @router.get("/cameras", response_model=List[Dict[str, Any]])
 @router.get("/api/v1/cameras", response_model=List[Dict[str, Any]])
-def get_cameras(user: Dict[str, Any] = Depends(require_operator)):
+@limiter.limit("300/minute")
+def get_cameras(request: Request, user: Dict[str, Any] = Depends(require_operator)):
     """
     TASK 7: Retrieve all cameras with status and live metrics.
     Accessible to: ADMIN + OPERATOR.
@@ -60,7 +64,8 @@ def get_cameras(user: Dict[str, Any] = Depends(require_operator)):
 
 @router.get("/cameras/{camera_id}", response_model=Dict[str, Any])
 @router.get("/api/v1/cameras/{camera_id}", response_model=Dict[str, Any])
-def get_camera_detail(camera_id: str, user: Dict[str, Any] = Depends(require_operator)):
+@limiter.limit("300/minute")
+def get_camera_detail(request: Request, camera_id: str, user: Dict[str, Any] = Depends(require_operator)):
     """
     Retrieve single camera by ID.
     Accessible to: ADMIN + OPERATOR.
@@ -73,7 +78,9 @@ def get_camera_detail(camera_id: str, user: Dict[str, Any] = Depends(require_ope
 
 @router.put("/cameras/{camera_id}", response_model=Dict[str, Any])
 @router.put("/api/v1/cameras/{camera_id}", response_model=Dict[str, Any])
+@limiter.limit("300/minute")
 def update_camera(
+    request: Request,
     camera_id: str,
     payload: CameraUpdateRequest,
     user: Dict[str, Any] = Depends(require_admin)

@@ -37,18 +37,58 @@ class FeatureExtractor:
         return round(max(0.0, min(100.0, val)), 2)
 
     @classmethod
-    def extract_growth_norm(cls, current_people: int, previous_people: int) -> float:
+    def extract_growth_norm(
+        cls,
+        current_people: int,
+        previous_people: int,
+        time_window: float = 10.0
+    ) -> float:
         """
-        Formula: growth_rate = ((current_people - previous_people) / previous_people) * 100
-        Normalized range: [0.0, 100.0]
+        TASK 1: Wall-clock crowd growth calculation.
+        Formula:
+            growth = (current_people - previous_people) / previous_people / time_window
+        Example:
+            Previous 200, Current 240 after 10s:
+            (240 - 200) / 200 = 20% in 10 seconds.
         """
         if previous_people <= 0:
             if current_people > 0:
                 return min(100.0, current_people * 10.0)
             return 0.0
 
-        rate = ((float(current_people) - float(previous_people)) / float(previous_people)) * 100.0
-        return round(max(0.0, min(100.0, rate)), 2)
+        tw = max(0.001, float(time_window))
+        pct_growth = ((float(current_people) - float(previous_people)) / float(previous_people)) * 100.0
+        return round(max(0.0, min(100.0, pct_growth)), 2)
+
+    @classmethod
+    def calculate_growth_rate(
+        cls,
+        current_people: int,
+        previous_people: int,
+        time_window_seconds: float = 10.0
+    ) -> Dict[str, Any]:
+        """
+        Explicit Task 1 wall-clock growth metric:
+        growth = (current_people - previous_people) / previous_people / time_window
+        """
+        if previous_people <= 0:
+            return {
+                "growth_rate_per_sec": 0.0,
+                "percentage_growth": 0.0,
+                "time_window_seconds": time_window_seconds
+            }
+
+        tw = max(0.001, float(time_window_seconds))
+        pct = ((current_people - previous_people) / previous_people) * 100.0
+        growth_rate = ((current_people - previous_people) / previous_people) / tw
+
+        return {
+            "growth_rate_per_sec": round(growth_rate, 4),
+            "percentage_growth": round(pct, 2),
+            "time_window_seconds": tw,
+            "current_people": current_people,
+            "previous_people": previous_people
+        }
 
     @classmethod
     def extract_speed_norm(cls, current_speed_px: float, max_speed_px: Optional[float] = None) -> float:

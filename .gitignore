@@ -41,6 +41,10 @@ scratch/*.avi
 scratch/*.jpg
 scratch/*.png
 
+# Logs
+logs/*.log
+!logs/.gitkeep
+
 # IDE & OS
 .vscode/
 .idea/

@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel, Field
 from app.services.alert_service import AlertService
-from app.auth.security import require_operator
+from app.auth.auth import require_operator
+from app.config.rate_limiter import limiter
 
 router = APIRouter(tags=["Alert Management"])
 
@@ -18,7 +19,9 @@ class RiskEvaluationInput(BaseModel):
 
 @router.get("/alerts", response_model=List[Dict[str, Any]])
 @router.get("/api/v1/alerts", response_model=List[Dict[str, Any]])
+@limiter.limit("300/minute")
 def get_alerts(
+    request: Request,
     status: Optional[str] = Query(None, description="Filter by status: ACTIVE, ACKNOWLEDGED, RESOLVED"),
     camera_id: Optional[str] = Query(None, description="Filter by camera UUID"),
     user: Dict[str, Any] = Depends(require_operator)
@@ -32,7 +35,9 @@ def get_alerts(
 
 @router.put("/alerts/{alert_id}/resolve", response_model=Dict[str, Any])
 @router.put("/api/v1/alerts/{alert_id}/resolve", response_model=Dict[str, Any])
+@limiter.limit("300/minute")
 def resolve_alert(
+    request: Request,
     alert_id: str,
     user: Dict[str, Any] = Depends(require_operator)
 ):

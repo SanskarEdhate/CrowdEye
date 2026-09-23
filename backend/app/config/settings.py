@@ -28,14 +28,20 @@ class Settings(BaseSettings):
     SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
     SUPABASE_SERVICE_KEY: str = os.getenv("SUPABASE_SERVICE_KEY", "")
 
-    # CORS Origins (comma separated string or list)
-    CORS_ORIGINS_RAW: str = os.getenv("CORS_ORIGINS", "*")
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000,http://localhost:5500,http://127.0.0.1:5500,http://localhost:8000,https://crowdeye-ai.vercel.app")
+    CORS_ORIGINS_RAW: str = os.getenv("CORS_ORIGINS", "")
 
     @property
     def cors_origins(self) -> List[str]:
-        if not self.CORS_ORIGINS_RAW or self.CORS_ORIGINS_RAW.strip() == "*":
-            return ["*"]
-        return [origin.strip() for origin in self.CORS_ORIGINS_RAW.split(",") if origin.strip()]
+        """
+        TASK 7: Strict CORS hardening.
+        Prohibits wildcard '*' in production environments.
+        """
+        raw = self.CORS_ORIGINS_RAW or self.FRONTEND_URL
+        origins = [o.strip() for o in raw.split(",") if o.strip() and o.strip() != "*"]
+        if not origins:
+            return ["http://localhost:3000", "http://localhost:5500", "http://127.0.0.1:5500", "https://crowdeye-ai.vercel.app"]
+        return origins
 
     @property
     def is_supabase_configured(self) -> bool:

@@ -1,0 +1,36 @@
+# =============================================================================
+# CrowdEye AI - Dedicated AI Inference Worker Dockerfile (TASK 4)
+# Separated from FastAPI server: YOLOv8 + DeepSORT + Kinematics
+# =============================================================================
+FROM python:3.11-slim
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Install OpenCV headless dependencies and ffmpeg
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1 \
+    libglib2.0-0 \
+    libgomp1 \
+    ffmpeg \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install python dependencies for AI Worker
+COPY backend/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir slowapi pyjwt
+
+# Copy AI modules, AI Worker package, and weights
+COPY ai /app/ai
+COPY ai_worker /app/ai_worker
+COPY backend/app /app/app
+COPY yolov8n.pt /app/yolov8n.pt
+
+# Create logs directory
+RUN mkdir -p /app/logs
+
+# Run dedicated AI Worker process
+CMD ["python", "-m", "ai_worker.worker"]

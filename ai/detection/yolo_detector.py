@@ -14,6 +14,34 @@ class YOLODetector:
 
     PERSON_CLASS_ID = 0  # COCO class 0 is 'person'
 
+    _shared_instance = None
+
+    @classmethod
+    def get_shared_instance(cls, **kwargs) -> "YOLODetector":
+        """
+        TASK 2: Load model once at application startup.
+        Do NOT load model per request.
+        """
+        if cls._shared_instance is None or cls._shared_instance.model is None:
+            cls._shared_instance = cls(**kwargs)
+        return cls._shared_instance
+
+    @classmethod
+    def load_model_once(cls, **kwargs) -> "YOLODetector":
+        """Explicit startup pre-warm hook."""
+        return cls.get_shared_instance(**kwargs)
+
+    @staticmethod
+    def get_adaptive_frame_step(last_latency_ms: float) -> int:
+        """
+        TASK 2: Adaptive frame processing rule:
+        High load (>80ms per frame): Process every 5th frame
+        Normal load (<=80ms): Process every 2nd frame
+        """
+        if last_latency_ms > 80.0:
+            return 5
+        return 2
+
     def __init__(
         self,
         model_name: str = "yolov8n.pt",
