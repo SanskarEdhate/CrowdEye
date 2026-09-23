@@ -1,5 +1,7 @@
 import time
+from pathlib import Path
 from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -79,6 +81,11 @@ app.include_router(alerts_router)
 app.include_router(analytics_router)
 app.include_router(demo_router)
 app.include_router(websocket_router)
+
+# Mount videos directory for playback and sample clips
+VIDEOS_DIR = Path(__file__).resolve().parent.parent.parent / "videos"
+if VIDEOS_DIR.exists():
+    app.mount("/videos", StaticFiles(directory=str(VIDEOS_DIR)), name="videos")
 
 
 
