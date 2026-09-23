@@ -3,1324 +3,1260 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CrowdEye AI - Security Operations Dashboard</title>
+  <title>CrowdEye AI - Security Control Room Operations</title>
   
-  <!-- CSS -->
+  <!-- Dual CSS Paths for Guaranteed Resolution Across Any Server Root -->
   <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="css/style.css">
   
-  <!-- Leaflet CSS for Venue Map -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   
+  <!-- Chart.js for Telemetry Timelines -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
   <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20%220%22%20%22100%22%20%22100%22><text y=%22.9em%22 font-size=%2290%22>👁️</text></svg>">
 </head>
 <body>
 
-  <!-- Top Navigation Bar -->
+  <!-- Top Cyber-Security Navigation Bar -->
   <nav class="navbar">
-    <a href="../index.html" class="nav-brand">
-      <div class="brand-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-          <circle cx="12" cy="12" r="3"></circle>
-        </svg>
+    <div style="display: flex; align-items: center; gap: 2rem;">
+      <a href="dashboard.html" class="nav-brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </div>
+        <div>
+          <span class="brand-title">CrowdEye AI</span>
+          <span class="brand-subtitle">SOC PRO</span>
+        </div>
+      </a>
+      
+      <div class="nav-links">
+        <a href="dashboard.html" class="nav-link active">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          Command Room
+        </a>
+        <a href="cameras.html" class="nav-link">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+          CCTV Feeds
+        </a>
+        <a href="alerts.html" class="nav-link">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          Incident Alarms
+        </a>
+        <a href="analytics.html" class="nav-link">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          Analytics
+        </a>
       </div>
-      <span class="brand-title">CrowdEye AI</span>
-    </a>
-    
-    <div class="nav-links">
-      <a href="dashboard.html" class="nav-link active">Dashboard</a>
-      <a href="cameras.html" class="nav-link">Cameras</a>
-      <a href="alerts.html" class="nav-link">Alerts</a>
-      <a href="analytics.html" class="nav-link">Analytics</a>
-      <a href="monitoring.html" class="nav-link">Monitoring</a>
     </div>
 
-    <div style="display: flex; align-items: center; gap: 0.75rem;">
-      <div id="role-toggle-btn" class="role-indicator" onclick="toggleRole()" title="Click to toggle between ADMIN and OPERATOR mode" style="cursor: pointer; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; background: rgba(56, 189, 248, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan);">
-        <span>Role:</span> <strong id="current-role-label">OPERATOR</strong>
+    <!-- Right Controls: Live UTC Clock, Dynamic Role Toggle & Backend Status -->
+    <div class="nav-controls">
+      <div id="live-utc-clock" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-secondary); background: rgba(0,0,0,0.4); padding: 0.35rem 0.75rem; border-radius: 8px; border: 1px solid var(--border-subtle);">
+        --:--:-- UTC
       </div>
-      <div class="nav-status">
+
+      <div id="role-toggle-btn" class="role-badge" onclick="toggleRole()" title="Click to toggle between OPERATOR and ADMIN mode">
+        <span style="opacity: 0.7;">ROLE:</span> <strong id="current-role-label">OPERATOR</strong>
+      </div>
+
+      <div class="nav-status" id="ws-status-badge">
         <span class="pulse-dot"></span>
-        <span id="system-status-indicator">WEBSOCKET LIVE</span>
+        <span id="system-status-indicator">TELEMETRY LIVE</span>
       </div>
     </div>
   </nav>
 
-  <!-- Main Container -->
+  <!-- Main Command Center Workspace -->
   <main class="container">
     
-    <!-- Page Header -->
-    <header class="page-header">
-      <div class="header-title">
-        <h1>Security Control Room Operations Platform</h1>
-        <p>TASK 10: Real-time Camera Monitoring • Alert Mitigation & Resolution • Spatial Crowd Risk Control</p>
+    <!-- Hero Live Incident Banner (Dynamic Alert Strip) -->
+    <div id="incident-hero-banner" class="incident-banner safe">
+      <div class="incident-banner-content">
+        <div class="incident-icon-pill" id="incident-icon">🟢</div>
+        <div>
+          <div class="incident-title" id="incident-title">ALL VENUE SECTORS NORMAL • SAFETY COMPLIANT</div>
+          <div class="incident-desc" id="incident-desc">Pedestrian density is within normal safety thresholds. Velocity vectors confirm laminar flow across all monitored gates.</div>
+        </div>
       </div>
-      <div class="header-actions">
-        <button id="refresh-btn" class="btn btn-secondary" onclick="refreshSecurityData()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="23 4 23 10 17 10"></polyline>
-            <polyline points="1 20 1 14 7 14"></polyline>
-            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-          </svg>
-          Sync Control Room
+      <div style="display: flex; gap: 0.6rem; align-items: center;">
+        <span id="incident-time-stamp" style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);">MONITORED REAL-TIME</span>
+        <button id="resolve-incident-btn" class="btn btn-danger" style="display: none;" onclick="resolveCurrentIncident()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          Resolve Hazard Alarm
         </button>
       </div>
-    </header>
+    </div>
 
-    <!-- TASK 15: HACKATHON LIVE DEMO FLOW CONTROLLER -->
-    <div style="background: linear-gradient(135deg, rgba(20, 28, 46, 0.95), rgba(30, 41, 59, 0.95)); border: 1px solid var(--accent-cyan); border-radius: 12px; padding: 1rem 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-glow); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem;">
+    <!-- HACKATHON LIVE DEMO FLOW CONTROLLER -->
+    <section class="demo-controller-bar">
+      <div class="demo-info">
+        <span class="demo-tag">LIVE DEMO</span>
+        <div>
+          <div class="demo-title">Crowd Dynamics & Hazard Simulation Controller</div>
+          <div class="demo-subtext">Trigger real-time scenarios to evaluate YOLOv8 tracking, velocity drops, and automatic alert dispatch.</div>
+        </div>
+      </div>
+
+      <div class="demo-btn-group">
+        <button class="demo-btn safe" id="btn-demo-low" onclick="setScenario('low')">
+          <span>🟢</span> 1. Safe Flow (Uncrowded)
+        </button>
+        <button class="demo-btn caution" id="btn-demo-medium" onclick="setScenario('medium')">
+          <span>🟡</span> 2. Influx (Caution)
+        </button>
+        <button class="demo-btn critical" id="btn-demo-critical" onclick="setScenario('critical')">
+          <span>🔴</span> 3. Critical Surge (Crowded)
+        </button>
+        <button class="demo-btn primary" id="btn-demo-auto" onclick="startAutoPitchDemo()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          Auto 15s Pitch Demo
+        </button>
+        <button class="demo-btn" onclick="resetToBaseline()" title="Sync with live backend telemetry">
+          ↺ Reset Baseline
+        </button>
+      </div>
+    </section>
+
+    <!-- Top KPI Metrics Strip -->
+    <section class="metrics-strip">
+      <!-- Metric 1: Active Cameras -->
+      <div class="metric-card success">
+        <div class="card-top">
+          <span class="card-label">Active Cameras</span>
+          <div class="card-icon-bubble" style="color: var(--accent-cyan);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+          </div>
+        </div>
+        <div class="card-number" id="metric-cameras">4 / 4</div>
+        <div class="card-bottom">
+          <span style="color: var(--text-secondary);">100% CCTV Streams Online</span>
+          <span class="trend-indicator trend-stable">15.3 FPS AI</span>
+        </div>
+      </div>
+
+      <!-- Metric 2: Monitored Headcount -->
+      <div class="metric-card">
+        <div class="card-top">
+          <span class="card-label">Monitored Headcount</span>
+          <div class="card-icon-bubble" style="color: var(--accent-blue);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          </div>
+        </div>
+        <div class="card-number" id="metric-headcount">2,500</div>
+        <div class="card-bottom">
+          <span id="metric-headcount-zone">Zone C: 940 | Zone B: 680</span>
+          <span class="trend-indicator trend-down" id="metric-headcount-trend">+0.8%/min</span>
+        </div>
+      </div>
+
+      <!-- Metric 3: Active Hazards -->
+      <div class="metric-card" id="card-alert-status">
+        <div class="card-top">
+          <span class="card-label">Active Hazards</span>
+          <div class="card-icon-bubble" style="color: var(--accent-rose);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          </div>
+        </div>
+        <div class="card-number" id="metric-active-alerts" style="color: var(--accent-emerald);">0</div>
+        <div class="card-bottom">
+          <span id="metric-alert-subtext">No Operator Actions Required</span>
+          <span class="trend-indicator trend-down" id="metric-alert-status-badge">CLEAR</span>
+        </div>
+      </div>
+
+      <!-- Metric 4: Peak Risk Score -->
+      <div class="metric-card warning" id="card-peak-risk">
+        <div class="card-top">
+          <span class="card-label">Peak Risk Index</span>
+          <div class="card-icon-bubble" style="color: var(--accent-amber);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          </div>
+        </div>
+        <div class="card-number" id="metric-risk-score" style="color: var(--accent-emerald);">18 <span style="font-size: 1.1rem; color: var(--text-muted);">/100</span></div>
+        <div class="card-bottom">
+          <span id="metric-risk-label">LEVEL: LOW (SAFE FLOW)</span>
+          <span class="trend-indicator trend-stable">4-Factor AI</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2-Column Command Workspace Grid -->
+    <div class="workspace-grid">
+      
+      <!-- LEFT COLUMN: Multi-Camera CCTV Grid + Spatial Floorplan Heatmap -->
       <div>
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-          <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--accent-cyan);"></span>
-          <strong style="color: var(--accent-cyan); font-family: var(--font-display); font-size: 1.05rem;">Hackathon Live Demo Controller (Phase 7)</strong>
-        </div>
-        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">
-          Execute live 8-step safety scenario: Detect Crowd → Heatmap → Risk Surge → Auto Alert → Operator Resolve
-        </p>
-      </div>
-
-      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-        <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="triggerDemoScenario('low')">
-          🟢 1. Safe Crowd
-        </button>
-        <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-color: var(--accent-amber); color: var(--accent-amber);" onclick="triggerDemoScenario('medium')">
-          🟡 2. Density Influx
-        </button>
-        <button class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background: var(--accent-rose); border-color: var(--accent-rose);" onclick="triggerDemoScenario('critical')">
-          🔴 3. Trigger Critical Surge
-        </button>
-        <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="runAutomatedDemoSequence()">
-          ▶ Auto Demo Sequence
-        </button>
-      </div>
-    </div>
-
-    <!-- SECTION 1: OVERVIEW CARDS (TASK 10) -->
-    <section class="metrics-grid">
-      <!-- Card 1: Active Cameras -->
-      <div class="metric-card">
-        <div class="card-header-flex">
-          <span class="card-title">Active Cameras</span>
-          <div class="card-icon" style="color: var(--accent-cyan);">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M23 7l-7 5 7 5V7z"></path>
-              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-            </svg>
-          </div>
-        </div>
-        <div class="card-value" id="val-total-cameras">4</div>
-        <div class="card-subtext">
-          <span>Active CCTV Feeds</span>
-        </div>
-      </div>
-
-      <!-- Card 2: Detected People -->
-      <div class="metric-card">
-        <div class="card-header-flex">
-          <span class="card-title">Detected People</span>
-          <div class="card-icon" style="color: var(--accent-blue);">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-              <circle cx="9" cy="7" r="4"></circle>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-            </svg>
-          </div>
-        </div>
-        <div class="card-value" id="val-detected-people">2,500</div>
-        <div class="card-subtext">
-          <span>Total Monitored Headcount</span>
-        </div>
-      </div>
-
-      <!-- Card 3: Active Alerts -->
-      <div class="metric-card critical">
-        <div class="card-header-flex">
-          <span class="card-title">Active Alerts</span>
-          <div class="card-icon" style="color: var(--accent-rose);">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
-          </div>
-        </div>
-        <div class="card-value" id="val-active-alerts" style="color: var(--accent-rose);">2</div>
-        <div class="card-subtext">
-          <span>Requires Operator Resolution</span>
-        </div>
-      </div>
-
-      <!-- Card 4: High Risk Zones -->
-      <div class="metric-card warning">
-        <div class="card-header-flex">
-          <span class="card-title">High Risk Zones</span>
-          <div class="card-icon" style="color: var(--accent-amber);">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-              <line x1="12" y1="9" x2="12" y2="13"></line>
-              <line x1="12" y1="17" x2="12.01" y2="17"></line>
-            </svg>
-          </div>
-        </div>
-        <div class="card-value" id="val-high-risk-zones" style="color: var(--accent-amber);">2</div>
-        <div class="card-subtext">
-          <span>Zones in WARNING / CRITICAL</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- SECTION 2: CAMERA GRID (TASK 10) -->
-    <section class="panel" style="margin-top: 1.5rem;">
-      <div class="panel-header">
-        <h2 class="panel-title" style="display: flex; align-items: center; gap: 0.5rem;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2">
-            <path d="M23 7l-7 5 7 5V7z"></path>
-            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-          </svg>
-          Camera Grid & Telemetry Cards
-        </h2>
-        <div style="display: flex; gap: 0.5rem; align-items: center;">
-          <a href="cameras.html" class="btn btn-secondary" style="padding: 0.35rem 0.8rem; font-size: 0.8rem;">Manage Cameras →</a>
-          <button class="btn btn-secondary" style="padding: 0.35rem 0.8rem; font-size: 0.8rem;" onclick="loadCameraGrid()">Refresh Grid</button>
-        </div>
-      </div>
-      <div id="camera-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; margin-top: 1rem;">
-        <div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">Loading security camera feeds...</div>
-      </div>
-    </section>
-
-    <!-- SECTION 3: ALERT PANEL (TASK 10: Critical & Warning alerts + Resolve Action) -->
-    <section class="panel" style="margin-top: 1.5rem; border: 1px solid rgba(244, 63, 94, 0.3);">
-      <div class="panel-header">
-        <h2 class="panel-title" style="display: flex; align-items: center; gap: 0.5rem; color: var(--accent-rose);">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="12"></line>
-            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-          </svg>
-          Active Alert Mitigation Panel (Critical & Warning)
-        </h2>
-        <div style="display: flex; gap: 0.5rem; align-items: center;">
-          <a href="alerts.html" class="btn btn-secondary" style="padding: 0.35rem 0.8rem; font-size: 0.8rem;">Full Alert Audit →</a>
-          <span class="badge badge-critical" id="panel-active-alert-badge">0 Active</span>
-        </div>
-      </div>
-      
-      <div id="active-alerts-panel" style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
-        <div style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Loading active alarms...</div>
-      </div>
-    </section>
-
-    <!-- Visual Dashboard Section: Charts & Map Split -->
-    <div class="dashboard-grid">
-      
-      <!-- Left Panel: Crowd Density & Flow Chart -->
-      <section class="panel">
-        <div class="panel-header">
-          <h2 class="panel-title">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-            </svg>
-            Crowd Density & Risk Timeline
-          </h2>
-          <span style="font-size: 0.8rem; color: var(--text-muted);">60-Minute Window</span>
-        </div>
-        <div class="chart-container">
-          <canvas id="densityChart"></canvas>
-        </div>
-      </section>
-
-      <!-- Right Panel: Leaflet Placeholder Map -->
-      <section class="panel">
-        <div class="panel-header">
-          <h2 class="panel-title">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-emerald)" stroke-width="2">
-              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
-              <line x1="8" y1="2" x2="8" y2="18"></line>
-              <line x1="16" y1="6" x2="16" y2="22"></line>
-            </svg>
-            Venue Camera Zones (GIS)
-          </h2>
-          <span style="font-size: 0.8rem; color: var(--text-muted);">Leaflet.js</span>
-        </div>
-        <div id="venue-map"></div>
-      </section>
-
-    </div>
-
-    <!-- =======================================================================
-         PHASE 4: CROWD DENSITY ESTIMATION & ZONE HEATMAP STUDIO
-         ======================================================================= -->
-    <section class="panel" style="margin-top: 1.5rem; border: 1px solid rgba(56, 189, 248, 0.25);">
-      <div class="panel-header" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
-        <div>
-          <h2 class="panel-title" style="display: flex; align-items: center; gap: 0.5rem;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7"></rect>
-              <rect x="14" y="3" width="7" height="7"></rect>
-              <rect x="14" y="14" width="7" height="7"></rect>
-              <rect x="3" y="14" width="7" height="7"></rect>
-            </svg>
-            Phase 4: Crowd Density Estimation & Zone Heatmap Studio
-          </h2>
-          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
-            Spatial partition analysis • Perspective homography • Dynamic Gaussian heat distribution • Optional CSRNet verification
-          </p>
-        </div>
-        <div style="display: flex; gap: 0.75rem; align-items: center;">
-          <span class="badge" id="density-job-badge" style="background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan); border: 1px solid var(--accent-cyan);">READY</span>
-        </div>
-      </div>
-
-      <!-- Controls & Progress -->
-      <div style="display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--border-subtle);">
-        <div style="display: flex; gap: 0.75rem; align-items: center;">
-          <input type="file" id="density-video-input" accept="video/mp4,video/avi,video/mov" class="form-input" style="max-width: 350px; font-size: 0.85rem;">
-          <button id="run-density-btn" class="btn btn-primary" onclick="startDensityJob()" style="display: flex; align-items: center; gap: 0.5rem;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
-            Analyze Zone Density
-          </button>
-        </div>
-        <div style="min-width: 260px;">
-          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.35rem;">
-            <span>Processing Progress</span>
-            <span id="density-progress-text">0%</span>
-          </div>
-          <div style="height: 8px; background: var(--bg-surface-elevated); border-radius: 9999px; overflow: hidden;">
-            <div id="density-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-emerald)); transition: width 0.3s ease;"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Density Studio Workspace: Zones + Heatmap Canvas Split -->
-      <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
         
-        <!-- Left Column: Zone Breakdown Grid -->
-        <div>
-          <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
-            <span>Monitored Camera Zones (2×3 Grid)</span>
-            <span style="font-size: 0.75rem; color: var(--text-muted);">Capacity Normalized</span>
-          </h3>
-
-          <div id="zone-cards-container" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;">
-            <!-- Zone A -->
-            <div class="zone-card" id="card-zone-A" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.85rem;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <strong style="color: var(--accent-cyan);">Zone A</strong>
-                <span class="badge" id="badge-zone-A" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); font-size: 0.7rem;">LOW</span>
-              </div>
-              <div style="font-size: 1.3rem; font-weight: 700;" id="count-zone-A">0 <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">/ 150 cap</span></div>
-              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Density: <span id="score-zone-A">0.0%</span></div>
-              <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 0.5rem; overflow: hidden;">
-                <div id="bar-zone-A" style="width: 0%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
-              </div>
-            </div>
-
-            <!-- Zone B -->
-            <div class="zone-card" id="card-zone-B" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.85rem;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <strong style="color: var(--accent-cyan);">Zone B</strong>
-                <span class="badge" id="badge-zone-B" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); font-size: 0.7rem;">LOW</span>
-              </div>
-              <div style="font-size: 1.3rem; font-weight: 700;" id="count-zone-B">0 <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">/ 200 cap</span></div>
-              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Density: <span id="score-zone-B">0.0%</span></div>
-              <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 0.5rem; overflow: hidden;">
-                <div id="bar-zone-B" style="width: 0%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
-              </div>
-            </div>
-
-            <!-- Zone C -->
-            <div class="zone-card" id="card-zone-C" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.85rem;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <strong style="color: var(--accent-cyan);">Zone C</strong>
-                <span class="badge" id="badge-zone-C" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); font-size: 0.7rem;">LOW</span>
-              </div>
-              <div style="font-size: 1.3rem; font-weight: 700;" id="count-zone-C">0 <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">/ 150 cap</span></div>
-              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Density: <span id="score-zone-C">0.0%</span></div>
-              <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 0.5rem; overflow: hidden;">
-                <div id="bar-zone-C" style="width: 0%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
-              </div>
-            </div>
-
-            <!-- Zone D -->
-            <div class="zone-card" id="card-zone-D" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.85rem;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <strong style="color: var(--accent-cyan);">Zone D</strong>
-                <span class="badge" id="badge-zone-D" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); font-size: 0.7rem;">LOW</span>
-              </div>
-              <div style="font-size: 1.3rem; font-weight: 700;" id="count-zone-D">0 <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">/ 150 cap</span></div>
-              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Density: <span id="score-zone-D">0.0%</span></div>
-              <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 0.5rem; overflow: hidden;">
-                <div id="bar-zone-D" style="width: 0%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
-              </div>
-            </div>
-
-            <!-- Zone E -->
-            <div class="zone-card" id="card-zone-E" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.85rem;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <strong style="color: var(--accent-cyan);">Zone E</strong>
-                <span class="badge" id="badge-zone-E" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); font-size: 0.7rem;">LOW</span>
-              </div>
-              <div style="font-size: 1.3rem; font-weight: 700;" id="count-zone-E">0 <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">/ 200 cap</span></div>
-              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Density: <span id="score-zone-E">0.0%</span></div>
-              <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 0.5rem; overflow: hidden;">
-                <div id="bar-zone-E" style="width: 0%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
-              </div>
-            </div>
-
-            <!-- Zone F -->
-            <div class="zone-card" id="card-zone-F" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.85rem;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <strong style="color: var(--accent-cyan);">Zone F</strong>
-                <span class="badge" id="badge-zone-F" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); font-size: 0.7rem;">LOW</span>
-              </div>
-              <div style="font-size: 1.3rem; font-weight: 700;" id="count-zone-F">0 <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">/ 150 cap</span></div>
-              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Density: <span id="score-zone-F">0.0%</span></div>
-              <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 0.5rem; overflow: hidden;">
-                <div id="bar-zone-F" style="width: 0%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- CSRNet Advisory Verification Status -->
-          <div id="csrnet-status-box" style="margin-top: 1rem; background: var(--bg-surface); border: 1px dashed var(--border-medium); border-radius: 8px; padding: 0.85rem; display: flex; align-items: center; justify-content: space-between;">
+        <!-- CCTV Live Matrix Panel -->
+        <div class="panel">
+          <div class="panel-header">
             <div>
-              <span style="font-size: 0.75rem; font-weight: 600; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 0.05em;">Optional CSRNet Congestion Verification</span>
-              <p id="csrnet-info-text" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Standby (Runs automatically when density > 70% or YOLO conf drops)</p>
+              <h2 class="panel-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2.2"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                Multi-Camera CCTV Matrix & Spatial Telemetry
+              </h2>
+              <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">
+                YOLOv8 Person Detection • DeepSORT Tracking IDs • Wall-Clock Velocity Vectors
+              </p>
             </div>
-            <span id="csrnet-badge" class="badge" style="background: rgba(148, 163, 184, 0.15); color: var(--text-muted);">STANDBY</span>
-          </div>
-
-        </div>
-
-        <!-- Right Column: HTML5 Dynamic Density Heatmap Canvas -->
-        <div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-            <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-primary);">
-              Dynamic Heatmap Overlay
-            </h3>
-            <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: var(--text-muted);">
-              <span>Low</span>
-              <div style="width: 80px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #38bdf8, #10b981, #f59e0b, #ef4444);"></div>
-              <span>Critical</span>
-            </div>
-          </div>
-
-          <div style="position: relative; width: 100%; aspect-ratio: 4/3; background: #070a10; border-radius: 8px; border: 1px solid var(--border-subtle); overflow: hidden;">
-            <canvas id="zoneHeatmapCanvas" width="640" height="480" style="width: 100%; height: 100%; display: block;"></canvas>
             
-            <div id="heatmap-placeholder" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5">
-                <circle cx="12" cy="12" r="10"></circle>
-                <path d="M12 2a10 10 0 0 1 10 10"></path>
-              </svg>
-              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Upload video to generate real-time heatmap</p>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <button class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem;" onclick="toggleOverlays()" id="btn-toggle-boxes">
+                👁️ Bounding Boxes: ON
+              </button>
+              <button class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem;" onclick="refreshCameraGrid()">
+                ↻ Sync
+              </button>
+            </div>
+          </div>
+
+          <!-- 2x2 CCTV Matrix -->
+          <div class="cctv-matrix">
+            
+            <!-- CAM-01: North Gate -->
+            <div class="cctv-card" id="card-cam-1">
+              <div class="cctv-header">
+                <div class="cctv-title">
+                  <span class="cctv-rec-dot"></span>
+                  <span id="label-cam-1">CAM-01 • North Gate</span>
+                </div>
+                <span class="cctv-badge low" id="badge-cam-1">LOW RISK</span>
+              </div>
+              <div class="cctv-viewport" onclick="openCameraModal('CAM-01', 'North Gate Entry')">
+                <canvas class="cctv-canvas" id="canvas-cam-1"></canvas>
+                <div class="cctv-overlay-info">
+                  <span>HEADCOUNT: <strong id="count-cam-1" style="color: #fff;">180</strong></span>
+                  <span>VELOCITY: <strong id="vel-cam-1" style="color: #34d399;">1.4 m/s</strong></span>
+                  <span>DENSITY: <strong id="den-cam-1" style="color: #38bdf8;">0.9 ppl/m²</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- CAM-02: Concourse B -->
+            <div class="cctv-card" id="card-cam-2">
+              <div class="cctv-header">
+                <div class="cctv-title">
+                  <span class="cctv-rec-dot"></span>
+                  <span id="label-cam-2">CAM-02 • Concourse B</span>
+                </div>
+                <span class="cctv-badge low" id="badge-cam-2">LOW RISK</span>
+              </div>
+              <div class="cctv-viewport" onclick="openCameraModal('CAM-02', 'Central Concourse B')">
+                <canvas class="cctv-canvas" id="canvas-cam-2"></canvas>
+                <div class="cctv-overlay-info">
+                  <span>HEADCOUNT: <strong id="count-cam-2" style="color: #fff;">320</strong></span>
+                  <span>VELOCITY: <strong id="vel-cam-2" style="color: #34d399;">1.2 m/s</strong></span>
+                  <span>DENSITY: <strong id="den-cam-2" style="color: #38bdf8;">1.4 ppl/m²</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- CAM-03: Main Stage (Hotspot) -->
+            <div class="cctv-card" id="card-cam-3">
+              <div class="cctv-header">
+                <div class="cctv-title">
+                  <span class="cctv-rec-dot"></span>
+                  <span id="label-cam-3">CAM-03 • Main Stage (Zone C)</span>
+                </div>
+                <span class="cctv-badge low" id="badge-cam-3">LOW RISK</span>
+              </div>
+              <div class="cctv-viewport" onclick="openCameraModal('CAM-03', 'Main Stage Front')">
+                <canvas class="cctv-canvas" id="canvas-cam-3"></canvas>
+                <div class="cctv-overlay-info">
+                  <span>HEADCOUNT: <strong id="count-cam-3" style="color: #fff;">940</strong></span>
+                  <span>VELOCITY: <strong id="vel-cam-3" style="color: #34d399;">1.1 m/s</strong></span>
+                  <span>DENSITY: <strong id="den-cam-3" style="color: #38bdf8;">1.8 ppl/m²</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- CAM-04: Exit Corridor -->
+            <div class="cctv-card" id="card-cam-4">
+              <div class="cctv-header">
+                <div class="cctv-title">
+                  <span class="cctv-rec-dot"></span>
+                  <span id="label-cam-4">CAM-04 • West Exit Corridor</span>
+                </div>
+                <span class="cctv-badge low" id="badge-cam-4">LOW RISK</span>
+              </div>
+              <div class="cctv-viewport" onclick="openCameraModal('CAM-04', 'West Exit Bottleneck')">
+                <canvas class="cctv-canvas" id="canvas-cam-4"></canvas>
+                <div class="cctv-overlay-info">
+                  <span>HEADCOUNT: <strong id="count-cam-4" style="color: #fff;">210</strong></span>
+                  <span>VELOCITY: <strong id="vel-cam-4" style="color: #34d399;">1.5 m/s</strong></span>
+                  <span>DENSITY: <strong id="den-cam-4" style="color: #38bdf8;">0.7 ppl/m²</strong></span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Venue Spatial Floorplan & Heatmap Panel -->
+        <div class="panel venue-map-card">
+          <div class="panel-header" style="margin-bottom: 0.75rem;">
+            <div>
+              <h3 style="font-size: 1.05rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+                Venue Spatial Density Heatmap (Bird's-Eye View)
+              </h3>
+              <p style="font-size: 0.78rem; color: var(--text-secondary);">Click any zone to inspect live camera telemetry and capacity thresholds.</p>
+            </div>
+            <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan);">HOMOGRAPHY PROJECTION</span>
+          </div>
+
+          <!-- Interactive Venue SVG Layout -->
+          <div style="background: #020409; border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1rem; position: relative; overflow: hidden;">
+            <svg viewBox="0 0 800 240" style="width: 100%; height: auto; display: block;" id="venue-svg">
+              <defs>
+                <pattern id="grid-pat" width="20" height="20" patternUnits="userSpaceOnUse">
+                  <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+                </pattern>
+                <radialGradient id="heat-low" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#10b981" stop-opacity="0.35"/>
+                  <stop offset="100%" stop-color="#10b981" stop-opacity="0.05"/>
+                </radialGradient>
+                <radialGradient id="heat-med" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.55"/>
+                  <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.1"/>
+                </radialGradient>
+                <radialGradient id="heat-crit" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#f43f5e" stop-opacity="0.75"/>
+                  <stop offset="100%" stop-color="#f43f5e" stop-opacity="0.15"/>
+                </radialGradient>
+              </defs>
+
+              <rect width="800" height="240" fill="url(#grid-pat)" />
+
+              <!-- Zone A: North Gates -->
+              <g id="svg-zone-A" style="cursor: pointer;" onclick="highlightZone('Zone A')">
+                <rect x="30" y="25" width="160" height="190" rx="8" fill="#0d1424" stroke="rgba(56, 189, 248, 0.4)" stroke-width="1.5" />
+                <rect x="30" y="25" width="160" height="190" rx="8" id="svg-heat-A" fill="url(#heat-low)" />
+                <text x="45" y="55" fill="#38bdf8" font-family="Outfit" font-weight="700" font-size="14">ZONE A</text>
+                <text x="45" y="75" fill="#94a3b8" font-family="Inter" font-size="11">North Turnstiles</text>
+                <text x="45" y="185" fill="#fff" font-family="Outfit" font-weight="800" font-size="20" id="svg-count-A">180 ppl</text>
+                <text x="45" y="202" fill="#64748b" font-family="JetBrains Mono" font-size="10" id="svg-den-A">0.9 ppl/m²</text>
+              </g>
+
+              <!-- Zone B: Central Concourse -->
+              <g id="svg-zone-B" style="cursor: pointer;" onclick="highlightZone('Zone B')">
+                <rect x="220" y="25" width="160" height="190" rx="8" fill="#0d1424" stroke="rgba(56, 189, 248, 0.4)" stroke-width="1.5" />
+                <rect x="220" y="25" width="160" height="190" rx="8" id="svg-heat-B" fill="url(#heat-low)" />
+                <text x="235" y="55" fill="#38bdf8" font-family="Outfit" font-weight="700" font-size="14">ZONE B</text>
+                <text x="235" y="75" fill="#94a3b8" font-family="Inter" font-size="11">Central Concourse</text>
+                <text x="235" y="185" fill="#fff" font-family="Outfit" font-weight="800" font-size="20" id="svg-count-B">320 ppl</text>
+                <text x="235" y="202" fill="#64748b" font-family="JetBrains Mono" font-size="10" id="svg-den-B">1.4 ppl/m²</text>
+              </g>
+
+              <!-- Zone C: Main Stage (Hotspot) -->
+              <g id="svg-zone-C" style="cursor: pointer;" onclick="highlightZone('Zone C')">
+                <rect x="410" y="25" width="180" height="190" rx="8" fill="#0d1424" stroke="rgba(56, 189, 248, 0.4)" stroke-width="1.5" />
+                <rect x="410" y="25" width="180" height="190" rx="8" id="svg-heat-C" fill="url(#heat-low)" />
+                <text x="425" y="55" fill="#38bdf8" font-family="Outfit" font-weight="700" font-size="14">ZONE C (HOTSPOT)</text>
+                <text x="425" y="75" fill="#94a3b8" font-family="Inter" font-size="11">Main Arena / Stage</text>
+                <text x="425" y="185" fill="#fff" font-family="Outfit" font-weight="800" font-size="20" id="svg-count-C">940 ppl</text>
+                <text x="425" y="202" fill="#64748b" font-family="JetBrains Mono" font-size="10" id="svg-den-C">1.8 ppl/m²</text>
+              </g>
+
+              <!-- Zone D: Food & West Exits -->
+              <g id="svg-zone-D" style="cursor: pointer;" onclick="highlightZone('Zone D')">
+                <rect x="620" y="25" width="150" height="190" rx="8" fill="#0d1424" stroke="rgba(56, 189, 248, 0.4)" stroke-width="1.5" />
+                <rect x="620" y="25" width="150" height="190" rx="8" id="svg-heat-D" fill="url(#heat-low)" />
+                <text x="635" y="55" fill="#38bdf8" font-family="Outfit" font-weight="700" font-size="14">ZONE D</text>
+                <text x="635" y="75" fill="#94a3b8" font-family="Inter" font-size="11">West Exit Corridor</text>
+                <text x="635" y="185" fill="#fff" font-family="Outfit" font-weight="800" font-size="20" id="svg-count-D">210 ppl</text>
+                <text x="635" y="202" fill="#64748b" font-family="JetBrains Mono" font-size="10" id="svg-den-D">0.7 ppl/m²</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: Explainable AI Risk Engine + Incident Mitigation Panel + Telemetry Timeline -->
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        
+        <!-- Explainable AI Risk Engine Panel -->
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                Explainable AI Crowd Safety Engine
+              </h2>
+              <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">
+                Deterministic 4-Factor Telemetry • Sub-second Early Hazard Warning
+              </p>
+            </div>
+            <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399;" id="ai-engine-status-badge">AI ACTIVE</span>
+          </div>
+
+          <!-- Circular Score Gauge -->
+          <div class="risk-meter-container">
+            <div class="risk-circle-gauge" id="risk-gauge" style="--risk-percent: 18;">
+              <div class="risk-circle-inner">
+                <span class="risk-score-value" id="risk-score-big">18</span>
+                <span class="risk-score-label">RISK INDEX</span>
+              </div>
+            </div>
+
+            <div class="risk-meter-details">
+              <span class="risk-level-badge low" id="risk-level-badge">LOW HAZARD</span>
+              <div style="font-size: 0.85rem; font-weight: 600; color: #fff;" id="risk-summary-text">Normal Flow Within Safety Margins</div>
+              <p style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 0.25rem;" id="risk-detail-text">
+                All 4 telemetry factors remain stable. Pedestrian movement speed is uniform across all choke points.
+              </p>
+            </div>
+          </div>
+
+          <!-- 4-Factor Breakdown Progress Bars -->
+          <div class="factor-list">
+            
+            <!-- Factor 1: Crowd Density (40%) -->
+            <div class="factor-item">
+              <div class="factor-header">
+                <span class="factor-name">1. Crowd Density (40% weight)</span>
+                <span class="factor-val" id="val-factor-density" style="color: #34d399;">1.8 ppl/m² (Normal)</span>
+              </div>
+              <div class="factor-bar">
+                <div class="factor-fill" id="fill-factor-density" style="width: 20%; background: #10b981;"></div>
+              </div>
+            </div>
+
+            <!-- Factor 2: Velocity Deficit (25%) -->
+            <div class="factor-item">
+              <div class="factor-header">
+                <span class="factor-name">2. Movement Velocity (25% weight)</span>
+                <span class="factor-val" id="val-factor-velocity" style="color: #34d399;">1.4 m/s (Fluid)</span>
+              </div>
+              <div class="factor-bar">
+                <div class="factor-fill" id="fill-factor-velocity" style="width: 15%; background: #10b981;"></div>
+              </div>
+            </div>
+
+            <!-- Factor 3: Directional Chaos (20%) -->
+            <div class="factor-item">
+              <div class="factor-header">
+                <span class="factor-name">3. Directional Chaos (20% weight)</span>
+                <span class="factor-val" id="val-factor-chaos" style="color: #38bdf8;">0.12 (Laminar Flow)</span>
+              </div>
+              <div class="factor-bar">
+                <div class="factor-fill" id="fill-factor-chaos" style="width: 12%; background: #38bdf8;"></div>
+              </div>
+            </div>
+
+            <!-- Factor 4: Surge Growth (15%) -->
+            <div class="factor-item">
+              <div class="factor-header">
+                <span class="factor-name">4. Surge Growth Rate (15% weight)</span>
+                <span class="factor-val" id="val-factor-growth" style="color: #34d399;">+0.8%/s (Stable)</span>
+              </div>
+              <div class="factor-bar">
+                <div class="factor-fill" id="fill-factor-growth" style="width: 10%; background: #10b981;"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Incident Mitigation & Resolution Panel -->
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h3 style="font-size: 1.05rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-rose)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path></svg>
+                Incident Alarms & Operator Resolution
+              </h3>
+              <p style="font-size: 0.78rem; color: var(--text-secondary);">Duplicate-protected active incident queue.</p>
+            </div>
+            <a href="alerts.html" style="font-size: 0.78rem; color: var(--accent-cyan); text-decoration: none;">View All Audits →</a>
+          </div>
+
+          <div id="active-incident-list" style="display: flex; flex-direction: column; gap: 0.65rem;">
+            <!-- Default empty state -->
+            <div id="incident-empty-state" style="padding: 1.5rem; text-align: center; background: rgba(0,0,0,0.25); border-radius: 10px; border: 1px dashed var(--border-subtle);">
+              <span style="font-size: 1.8rem; display: block; margin-bottom: 0.5rem;">🛡️</span>
+              <strong style="color: #34d399; font-size: 0.95rem;">No Active Safety Violations</strong>
+              <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">All monitored venues operating within normal parameters.</p>
             </div>
           </div>
         </div>
 
-      </div>
-    </section>
-
-    <!-- =======================================================================
-         PHASE 5: CROWD RISK PREDICTION & EARLY WARNING ENGINE
-         ======================================================================= -->
-    <section class="panel" style="margin-top: 1.5rem; border: 1px solid rgba(244, 63, 94, 0.3);">
-      <div class="panel-header" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
-        <div>
-          <h2 class="panel-title" style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-primary);">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-rose)" stroke-width="2">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-              <path d="M12 8v4"></path>
-              <path d="M12 16h.01"></path>
-            </svg>
-            Phase 5: Crowd Risk Prediction & Early Warning Engine
-          </h2>
-          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
-            Explainable AI • 10-second rolling window telemetry • 4-factor deterministic scoring (0–100) • Early warning diagnostics
-          </p>
-        </div>
-        <div style="display: flex; gap: 0.75rem; align-items: center;">
-          <span class="badge" id="risk-engine-badge" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); border: 1px solid var(--accent-emerald);">IDLE / READY</span>
-          <button id="trigger-risk-btn" class="btn btn-secondary" onclick="triggerRiskAnalysis()" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="23 4 23 10 17 10"></polyline>
-              <polyline points="1 20 1 14 7 14"></polyline>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-            </svg>
-            Analyze Current Risk
-          </button>
-        </div>
-      </div>
-
-      <!-- Formula & Weight Legend -->
-      <div style="background: var(--bg-surface-elevated); border-radius: 8px; padding: 0.75rem 1rem; margin: 1rem 0; display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; font-size: 0.8rem; color: var(--text-secondary);">
-        <span style="font-weight: 600; color: var(--text-primary);">Deterministic Formula:</span>
-        <span><strong>40%</strong> Density</span>
-        <span><strong>25%</strong> Speed</span>
-        <span><strong>20%</strong> Movement Chaos (Circular Statistics)</span>
-        <span><strong>15%</strong> Growth Rate</span>
-        <span style="margin-left: auto; color: var(--accent-cyan); font-weight: 500;">Analysis Window: 10 Seconds</span>
-      </div>
-
-      <!-- Zone Risk Cards Grid (Zones A - F) -->
-      <div id="risk-cards-container" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
-        
-        <!-- Zone A Risk Card -->
-        <div class="risk-card" id="risk-card-A" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-            <strong style="font-size: 1.05rem; color: var(--accent-cyan);">Zone A</strong>
-            <span class="badge" id="risk-level-A" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald);">LOW</span>
+        <!-- Telemetry Timeline (Chart.js Dual Axis) -->
+        <div class="panel">
+          <div class="panel-header" style="margin-bottom: 0.5rem;">
+            <h3 style="font-size: 1rem; font-weight: 700; color: #fff;">Crowd Headcount & Risk Index Trend</h3>
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">LAST 30 MINS</span>
           </div>
-          <div style="display: flex; align-items: baseline; gap: 0.5rem;">
-            <span style="font-size: 1.8rem; font-weight: 800;" id="risk-score-A">15</span>
-            <span style="font-size: 0.85rem; color: var(--text-muted);">/ 100 Risk Index</span>
-          </div>
-          <div style="height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; margin: 0.6rem 0; overflow: hidden;">
-            <div id="risk-bar-A" style="width: 15%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.75rem;">
-            <div>Density: <span id="rf-density-A">15%</span></div>
-            <div>Speed: <span id="rf-speed-A">10%</span></div>
-            <div>Chaos: <span id="rf-chaos-A">5%</span></div>
-            <div>Growth: <span id="rf-growth-A">0%</span></div>
-          </div>
-          <div style="background: var(--bg-primary); border-radius: 6px; padding: 0.6rem; font-size: 0.75rem;">
-            <div style="font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem;">Diagnostic Explanations:</div>
-            <ul id="risk-reasons-A" style="margin: 0; padding-left: 1.1rem; color: var(--text-primary); line-height: 1.3;">
-              <li>Normal crowd flow within safety thresholds</li>
-            </ul>
-          </div>
-        </div>
-
-        <!-- Zone B Risk Card -->
-        <div class="risk-card" id="risk-card-B" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-            <strong style="font-size: 1.05rem; color: var(--accent-cyan);">Zone B</strong>
-            <span class="badge" id="risk-level-B" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald);">LOW</span>
-          </div>
-          <div style="display: flex; align-items: baseline; gap: 0.5rem;">
-            <span style="font-size: 1.8rem; font-weight: 800;" id="risk-score-B">15</span>
-            <span style="font-size: 0.85rem; color: var(--text-muted);">/ 100 Risk Index</span>
-          </div>
-          <div style="height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; margin: 0.6rem 0; overflow: hidden;">
-            <div id="risk-bar-B" style="width: 15%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.75rem;">
-            <div>Density: <span id="rf-density-B">15%</span></div>
-            <div>Speed: <span id="rf-speed-B">10%</span></div>
-            <div>Chaos: <span id="rf-chaos-B">5%</span></div>
-            <div>Growth: <span id="rf-growth-B">0%</span></div>
-          </div>
-          <div style="background: var(--bg-primary); border-radius: 6px; padding: 0.6rem; font-size: 0.75rem;">
-            <div style="font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem;">Diagnostic Explanations:</div>
-            <ul id="risk-reasons-B" style="margin: 0; padding-left: 1.1rem; color: var(--text-primary); line-height: 1.3;">
-              <li>Normal crowd flow within safety thresholds</li>
-            </ul>
-          </div>
-        </div>
-
-        <!-- Zone C Risk Card -->
-        <div class="risk-card" id="risk-card-C" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-            <strong style="font-size: 1.05rem; color: var(--accent-cyan);">Zone C</strong>
-            <span class="badge" id="risk-level-C" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald);">LOW</span>
-          </div>
-          <div style="display: flex; align-items: baseline; gap: 0.5rem;">
-            <span style="font-size: 1.8rem; font-weight: 800;" id="risk-score-C">15</span>
-            <span style="font-size: 0.85rem; color: var(--text-muted);">/ 100 Risk Index</span>
-          </div>
-          <div style="height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; margin: 0.6rem 0; overflow: hidden;">
-            <div id="risk-bar-C" style="width: 15%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.75rem;">
-            <div>Density: <span id="rf-density-C">15%</span></div>
-            <div>Speed: <span id="rf-speed-C">10%</span></div>
-            <div>Chaos: <span id="rf-chaos-C">5%</span></div>
-            <div>Growth: <span id="rf-growth-C">0%</span></div>
-          </div>
-          <div style="background: var(--bg-primary); border-radius: 6px; padding: 0.6rem; font-size: 0.75rem;">
-            <div style="font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem;">Diagnostic Explanations:</div>
-            <ul id="risk-reasons-C" style="margin: 0; padding-left: 1.1rem; color: var(--text-primary); line-height: 1.3;">
-              <li>Normal crowd flow within safety thresholds</li>
-            </ul>
-          </div>
-        </div>
-
-        <!-- Zone D Risk Card -->
-        <div class="risk-card" id="risk-card-D" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-            <strong style="font-size: 1.05rem; color: var(--accent-cyan);">Zone D</strong>
-            <span class="badge" id="risk-level-D" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald);">LOW</span>
-          </div>
-          <div style="display: flex; align-items: baseline; gap: 0.5rem;">
-            <span style="font-size: 1.8rem; font-weight: 800;" id="risk-score-D">15</span>
-            <span style="font-size: 0.85rem; color: var(--text-muted);">/ 100 Risk Index</span>
-          </div>
-          <div style="height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; margin: 0.6rem 0; overflow: hidden;">
-            <div id="risk-bar-D" style="width: 15%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.75rem;">
-            <div>Density: <span id="rf-density-D">15%</span></div>
-            <div>Speed: <span id="rf-speed-D">10%</span></div>
-            <div>Chaos: <span id="rf-chaos-D">5%</span></div>
-            <div>Growth: <span id="rf-growth-D">0%</span></div>
-          </div>
-          <div style="background: var(--bg-primary); border-radius: 6px; padding: 0.6rem; font-size: 0.75rem;">
-            <div style="font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem;">Diagnostic Explanations:</div>
-            <ul id="risk-reasons-D" style="margin: 0; padding-left: 1.1rem; color: var(--text-primary); line-height: 1.3;">
-              <li>Normal crowd flow within safety thresholds</li>
-            </ul>
-          </div>
-        </div>
-
-        <!-- Zone E Risk Card -->
-        <div class="risk-card" id="risk-card-E" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-            <strong style="font-size: 1.05rem; color: var(--accent-cyan);">Zone E</strong>
-            <span class="badge" id="risk-level-E" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald);">LOW</span>
-          </div>
-          <div style="display: flex; align-items: baseline; gap: 0.5rem;">
-            <span style="font-size: 1.8rem; font-weight: 800;" id="risk-score-E">15</span>
-            <span style="font-size: 0.85rem; color: var(--text-muted);">/ 100 Risk Index</span>
-          </div>
-          <div style="height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; margin: 0.6rem 0; overflow: hidden;">
-            <div id="risk-bar-E" style="width: 15%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.75rem;">
-            <div>Density: <span id="rf-density-E">15%</span></div>
-            <div>Speed: <span id="rf-speed-E">10%</span></div>
-            <div>Chaos: <span id="rf-chaos-E">5%</span></div>
-            <div>Growth: <span id="rf-growth-E">0%</span></div>
-          </div>
-          <div style="background: var(--bg-primary); border-radius: 6px; padding: 0.6rem; font-size: 0.75rem;">
-            <div style="font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem;">Diagnostic Explanations:</div>
-            <ul id="risk-reasons-E" style="margin: 0; padding-left: 1.1rem; color: var(--text-primary); line-height: 1.3;">
-              <li>Normal crowd flow within safety thresholds</li>
-            </ul>
-          </div>
-        </div>
-
-        <!-- Zone F Risk Card -->
-        <div class="risk-card" id="risk-card-F" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-            <strong style="font-size: 1.05rem; color: var(--accent-cyan);">Zone F</strong>
-            <span class="badge" id="risk-level-F" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald);">LOW</span>
-          </div>
-          <div style="display: flex; align-items: baseline; gap: 0.5rem;">
-            <span style="font-size: 1.8rem; font-weight: 800;" id="risk-score-F">15</span>
-            <span style="font-size: 0.85rem; color: var(--text-muted);">/ 100 Risk Index</span>
-          </div>
-          <div style="height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; margin: 0.6rem 0; overflow: hidden;">
-            <div id="risk-bar-F" style="width: 15%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.75rem;">
-            <div>Density: <span id="rf-density-F">15%</span></div>
-            <div>Speed: <span id="rf-speed-F">10%</span></div>
-            <div>Chaos: <span id="rf-chaos-F">5%</span></div>
-            <div>Growth: <span id="rf-growth-F">0%</span></div>
-          </div>
-          <div style="background: var(--bg-primary); border-radius: 6px; padding: 0.6rem; font-size: 0.75rem;">
-            <div style="font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem;">Diagnostic Explanations:</div>
-            <ul id="risk-reasons-F" style="margin: 0; padding-left: 1.1rem; color: var(--text-primary); line-height: 1.3;">
-              <li>Normal crowd flow within safety thresholds</li>
-            </ul>
+          <div style="height: 180px; width: 100%;">
+            <canvas id="timelineChart"></canvas>
           </div>
         </div>
 
       </div>
-    </section>
 
-    <!-- Active Incident Alerts Table -->
-    <section class="panel">
-      <div class="panel-header">
-        <h2 class="panel-title">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-rose)" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="12"></line>
-            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-          </svg>
-          Active Safety Alarms & Congestion Warnings
-        </h2>
-        <span class="badge badge-critical" id="alert-counter-badge">2 Active</span>
-      </div>
-      
-      <div class="table-responsive">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Severity</th>
-              <th>Zone / Location</th>
-              <th>Trigger Reason</th>
-              <th>Logged At</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="alerts-table-body">
-            <tr>
-              <td><span class="badge badge-critical">CRITICAL</span></td>
-              <td><strong>Stage Area</strong> (Zone C)</td>
-              <td>High crowd surge detected (>3.5 ppl/m²)</td>
-              <td>Just now</td>
-              <td><span style="color: #f87171;">Unresolved</span></td>
-              <td><button class="btn btn-secondary" style="padding: 0.25rem 0.65rem; font-size: 0.8rem;">Dispatch Guard</button></td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-warning">WARNING</span></td>
-              <td><strong>Main Gate</strong> (Zone A)</td>
-              <td>Bottleneck forming at turnstiles</td>
-              <td>5 mins ago</td>
-              <td><span style="color: #fbbf24;">Investigating</span></td>
-              <td><button class="btn btn-secondary" style="padding: 0.25rem 0.65rem; font-size: 0.8rem;">Open Gate B</button></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+    </div>
 
   </main>
 
-  <footer class="footer">
-    CrowdEye AI • Hackathon Phase 1 • Real-time Crowd Safety Platform
-  </footer>
+  <!-- Deep Inspection Camera Modal -->
+  <div class="modal-backdrop" id="camModal" onclick="closeCameraModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <div>
+          <h2 style="font-size: 1.3rem; font-weight: 700; color: #fff;" id="modal-cam-title">CAM-01 • Deep Inspection</h2>
+          <p style="font-size: 0.85rem; color: var(--text-secondary);" id="modal-cam-loc">North Gate Entrance</p>
+        </div>
+        <button class="btn btn-secondary" style="padding: 0.35rem 0.75rem;" onclick="closeModalDirect()">✕ Close</button>
+      </div>
 
-  <!-- External Libraries (CDNs) -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+      <div style="aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; position: relative;">
+        <canvas id="modal-zoom-canvas" style="width: 100%; height: 100%; display: block;"></canvas>
+      </div>
 
-  <!-- Application Logic -->
-  <script src="../config.example.js"></script>
-  <script src="../js/supabase.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/app.js"></script>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1.25rem;">
+        <div style="background: rgba(0,0,0,0.3); padding: 0.8rem; border-radius: 8px; text-align: center;">
+          <div style="font-size: 0.75rem; color: var(--text-muted);">MONITORED PEOPLE</div>
+          <div style="font-size: 1.4rem; font-weight: 800; color: #fff;" id="modal-stat-people">180</div>
+        </div>
+        <div style="background: rgba(0,0,0,0.3); padding: 0.8rem; border-radius: 8px; text-align: center;">
+          <div style="font-size: 0.75rem; color: var(--text-muted);">ZONE DENSITY</div>
+          <div style="font-size: 1.4rem; font-weight: 800; color: #38bdf8;" id="modal-stat-density">0.9 ppl/m²</div>
+        </div>
+        <div style="background: rgba(0,0,0,0.3); padding: 0.8rem; border-radius: 8px; text-align: center;">
+          <div style="font-size: 0.75rem; color: var(--text-muted);">WALKING VELOCITY</div>
+          <div style="font-size: 1.4rem; font-weight: 800; color: #34d399;" id="modal-stat-velocity">1.4 m/s</div>
+        </div>
+        <div style="background: rgba(0,0,0,0.3); padding: 0.8rem; border-radius: 8px; text-align: center;">
+          <div style="font-size: 0.75rem; color: var(--text-muted);">STREAM FPS</div>
+          <div style="font-size: 1.4rem; font-weight: 800; color: #a855f7;">15.3 FPS</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <!-- Phase 4: Density & Dynamic Heatmap Controller -->
+  <!-- Audio Chime for Critical Surge Alert -->
+  <audio id="alert-siren" preload="auto">
+    <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLI7Z8sdyJwUritnxx3InBSyK2fHHcicFLIrZ8cdyJwUritnxx3InBSyK2fHHcicFLIrZ8cdyJwUritnxx3InBSyK2fHHcicFLIrZ8cdyJwU=" type="audio/wav">
+  </audio>
+
+  <!-- ========================================================================= -->
+  <!-- HIGH-PERFORMANCE INTERACTIVE CONTROLLER SCRIPT                            -->
+  <!-- ========================================================================= -->
   <script>
-    let densityPollTimer = null;
-    const API_BASE = window.location.port === "8000" ? "" : "http://127.0.0.1:8000";
-
-    async function startDensityJob() {
-      const fileInput = document.getElementById("density-video-input");
-      const runBtn = document.getElementById("run-density-btn");
-      const badge = document.getElementById("density-job-badge");
-      const progressBar = document.getElementById("density-progress-bar");
-      const progressText = document.getElementById("density-progress-text");
-
-      if (!fileInput.files || fileInput.files.length === 0) {
-        alert("Please select a crowd video (.mp4) to analyze zone densities.");
-        return;
+    // System State
+    const state = {
+      role: 'OPERATOR',
+      showBoxes: true,
+      currentScenario: 'normal',
+      manualScenarioActive: false,
+      activeAlert: null,
+      autoPitchTimer: null,
+      chartInstance: null,
+      cameras: [
+        { id: 'CAM-01', name: 'North Gate', zone: 'Zone A', count: 180, vel: 1.4, den: 0.9, risk: 'low' },
+        { id: 'CAM-02', name: 'Concourse B', zone: 'Zone B', count: 320, vel: 1.2, den: 1.4, risk: 'low' },
+        { id: 'CAM-03', name: 'Main Stage Front', zone: 'Zone C', count: 940, vel: 1.1, den: 1.8, risk: 'low' },
+        { id: 'CAM-04', name: 'West Exit', zone: 'Zone D', count: 210, vel: 1.5, den: 0.7, risk: 'low' },
+      ],
+      persons: {
+        'canvas-cam-1': [],
+        'canvas-cam-2': [],
+        'canvas-cam-3': [],
+        'canvas-cam-4': []
       }
+    };
 
-      const file = fileInput.files[0];
-      const formData = new FormData();
-      formData.append("file", file);
-
-      try {
-        runBtn.disabled = true;
-        runBtn.innerHTML = "Processing Video...";
-        badge.textContent = "QUEUED";
-        badge.style.color = "var(--accent-amber)";
-        badge.style.borderColor = "var(--accent-amber)";
-        progressBar.style.width = "5%";
-        progressText.textContent = "5%";
-
-        const res = await fetch(`${API_BASE}/density/start`, {
-          method: "POST",
-          body: formData
-        });
-
-        if (!res.ok) {
-          throw new Error(`Upload failed: ${res.statusText}`);
-        }
-
-        const data = await res.json();
-        const jobId = data.job_id;
-        badge.textContent = "PROCESSING";
-
-        // Poll job status
-        densityPollTimer = setInterval(async () => {
-          try {
-            const statusRes = await fetch(`${API_BASE}/density/status/${jobId}`);
-            if (statusRes.ok) {
-              const statusData = await statusRes.json();
-              const pct = statusData.progress || 0;
-              progressBar.style.width = `${pct}%`;
-              progressText.textContent = `${pct}%`;
-
-              if (statusData.status === "completed") {
-                clearInterval(densityPollTimer);
-                badge.textContent = "COMPLETED";
-                badge.style.color = "var(--accent-emerald)";
-                badge.style.borderColor = "var(--accent-emerald)";
-                runBtn.disabled = false;
-                runBtn.innerHTML = "Analyze Zone Density";
-
-                // Fetch final result
-                const resultRes = await fetch(`${API_BASE}/density/result/${jobId}`);
-                if (resultRes.ok) {
-                  const resultData = await resultRes.json();
-                  renderDensityResults(resultData);
-                }
-              } else if (statusData.status === "failed") {
-                clearInterval(densityPollTimer);
-                badge.textContent = "FAILED";
-                badge.style.color = "var(--accent-rose)";
-                badge.style.borderColor = "var(--accent-rose)";
-                runBtn.disabled = false;
-                runBtn.innerHTML = "Analyze Zone Density";
-                alert("Density analysis job failed during processing.");
-              }
-            }
-          } catch (err) {
-            console.error("Error polling density status:", err);
-          }
-        }, 1200);
-
-      } catch (err) {
-        console.error("Error starting density job:", err);
-        alert(`Error starting density estimation: ${err.message}`);
-        runBtn.disabled = false;
-        runBtn.innerHTML = "Analyze Zone Density";
-        badge.textContent = "ERROR";
-      }
+    // Live UTC Clock
+    function updateClock() {
+      const now = new Date();
+      const el = document.getElementById('live-utc-clock');
+      if (el) el.textContent = now.toUTCString().slice(17, 25) + ' UTC';
     }
+    setInterval(updateClock, 1000);
+    updateClock();
 
-    function renderDensityResults(result) {
-      if (!result || !result.zones) return;
-
-      const levelColors = {
-        "LOW": { bg: "rgba(16, 185, 129, 0.15)", text: "#10b981", bar: "#10b981" },
-        "MEDIUM": { bg: "rgba(245, 158, 11, 0.15)", text: "#f59e0b", bar: "#f59e0b" },
-        "HIGH": { bg: "rgba(249, 115, 22, 0.15)", text: "#f97316", bar: "#f97316" },
-        "CRITICAL": { bg: "rgba(239, 68, 68, 0.2)", text: "#ef4444", bar: "#ef4444" }
-      };
-
-      result.zones.forEach(z => {
-        const zoneKey = z.zone;
-        const countElem = document.getElementById(`count-zone-${zoneKey}`);
-        const scoreElem = document.getElementById(`score-zone-${zoneKey}`);
-        const badgeElem = document.getElementById(`badge-zone-${zoneKey}`);
-        const barElem = document.getElementById(`bar-zone-${zoneKey}`);
-
-        if (countElem) countElem.innerHTML = `${z.people} <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">/ ${z.capacity} cap</span>`;
-        if (scoreElem) scoreElem.textContent = `${Math.round(z.score * 100)}%`;
-
-        const colors = levelColors[z.density] || levelColors["LOW"];
-        if (badgeElem) {
-          badgeElem.textContent = z.density;
-          badgeElem.style.background = colors.bg;
-          badgeElem.style.color = colors.text;
-        }
-        if (barElem) {
-          barElem.style.width = `${Math.min(100, Math.round(z.score * 100))}%`;
-          barElem.style.background = colors.bar;
-        }
-      });
-
-      // CSRNet Advisory Box
-      const csrnetBadge = document.getElementById("csrnet-badge");
-      const csrnetText = document.getElementById("csrnet-info-text");
-      if (result.csrnet && result.csrnet.status !== "no_frame") {
-        if (csrnetBadge) {
-          csrnetBadge.textContent = "VERIFIED";
-          csrnetBadge.style.background = "rgba(56, 189, 248, 0.2)";
-          csrnetBadge.style.color = "var(--accent-cyan)";
-        }
-        if (csrnetText) {
-          csrnetText.textContent = `High density verification: Estimated ~${result.csrnet.estimated_count} people (${result.csrnet.confidence}).`;
-        }
-      } else {
-        if (csrnetBadge) {
-          csrnetBadge.textContent = "STANDBY";
-          csrnetBadge.style.background = "rgba(148, 163, 184, 0.15)";
-          csrnetBadge.style.color = "var(--text-muted)";
-        }
-        if (csrnetText) {
-          csrnetText.textContent = "Standby (YOLO count optimal; zone density within normal bounds)";
-        }
-      }
-
-      // Render Dynamic Heatmap Canvas
-      renderHeatmapCanvas(result.heatmap || []);
-    }
-
-    function renderHeatmapCanvas(points) {
-      const canvas = document.getElementById("zoneHeatmapCanvas");
-      const placeholder = document.getElementById("heatmap-placeholder");
-      if (!canvas) return;
-      if (placeholder) placeholder.style.display = "none";
-
-      const ctx = canvas.getContext("2d");
-      const width = canvas.width;
-      const height = canvas.height;
-
-      // Clear with dark venue background
-      ctx.fillStyle = "#070a10";
-      ctx.fillRect(0, 0, width, height);
-
-      // Draw 2x3 Venue Zone Grid Lines
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
-      ctx.lineWidth = 1;
-      ctx.setLineDash([4, 4]);
-
-      // Vertical grid lines
-      ctx.beginPath();
-      ctx.moveTo(width / 3, 0);
-      ctx.lineTo(width / 3, height);
-      ctx.moveTo((2 * width) / 3, 0);
-      ctx.lineTo((2 * width) / 3, height);
-      // Horizontal grid line
-      ctx.moveTo(0, height / 2);
-      ctx.lineTo(width, height / 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // Draw Zone Labels in watermark
-      ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
-      ctx.font = "bold 20px Outfit, sans-serif";
-      ctx.fillText("ZONE A", 20, 35);
-      ctx.fillText("ZONE B", width / 3 + 20, 35);
-      ctx.fillText("ZONE C", (2 * width) / 3 + 20, 35);
-      ctx.fillText("ZONE D", 20, height / 2 + 35);
-      ctx.fillText("ZONE E", width / 3 + 20, height / 2 + 35);
-      ctx.fillText("ZONE F", (2 * width) / 3 + 20, height / 2 + 35);
-
-      // Render Gaussian Heat Clouds
-      points.forEach(pt => {
-        const radius = 35;
-        const grad = ctx.createRadialGradient(pt.x, pt.y, 0, pt.x, pt.y, radius);
-
-        const int = pt.intensity;
-        if (int >= 0.8) {
-          grad.addColorStop(0, `rgba(239, 68, 68, ${int * 0.7})`);
-          grad.addColorStop(0.5, `rgba(249, 115, 22, ${int * 0.4})`);
-        } else if (int >= 0.5) {
-          grad.addColorStop(0, `rgba(245, 158, 11, ${int * 0.65})`);
-          grad.addColorStop(0.5, `rgba(16, 185, 129, ${int * 0.35})`);
-        } else {
-          grad.addColorStop(0, `rgba(56, 189, 248, ${int * 0.6})`);
-          grad.addColorStop(0.5, `rgba(59, 130, 246, ${int * 0.3})`);
-        }
-        grad.addColorStop(1, "rgba(0, 0, 0, 0)");
-
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(pt.x, pt.y, radius, 0, Math.PI * 2);
-        ctx.fill();
-      });
-    }
-
-    // =========================================================================
-    // PHASE 5: CROWD RISK CONTROLLER & WEBSOCKET LISTENER
-    // =========================================================================
-    let riskPollTimer = null;
-
-    async function triggerRiskAnalysis() {
-      const btn = document.getElementById("trigger-risk-btn");
-      const badge = document.getElementById("risk-engine-badge");
-
-      try {
-        btn.disabled = true;
-        btn.innerHTML = "Evaluating Risk...";
-        badge.textContent = "EVALUATING";
-        badge.style.color = "var(--accent-amber)";
-        badge.style.borderColor = "var(--accent-amber)";
-
-        const res = await fetch(`${API_BASE}/risk/analyze`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ camera_id: null })
-        });
-
-        if (!res.ok) throw new Error(`Risk analysis start failed: ${res.statusText}`);
-        const jobData = await res.json();
-        const jobId = jobData.job_id;
-
-        // Poll risk job completion
-        riskPollTimer = setInterval(async () => {
-          try {
-            const statusRes = await fetch(`${API_BASE}/risk/status/${jobId}`);
-            if (statusRes.ok) {
-              const statusData = await statusRes.json();
-              if (statusData.status === "completed") {
-                clearInterval(riskPollTimer);
-                badge.textContent = "RISK UPDATED";
-                badge.style.color = "var(--accent-emerald)";
-                badge.style.borderColor = "var(--accent-emerald)";
-                btn.disabled = false;
-                btn.innerHTML = `
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="23 4 23 10 17 10"></polyline>
-                    <polyline points="1 20 1 14 7 14"></polyline>
-                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                  </svg>
-                  Analyze Current Risk
-                `;
-
-                // Fetch latest results
-                const resultRes = await fetch(`${API_BASE}/risk/result/default`);
-                if (resultRes.ok) {
-                  const resultData = await resultRes.json();
-                  renderRiskResults(resultData.zones || []);
-                }
-              } else if (statusData.status === "failed") {
-                clearInterval(riskPollTimer);
-                badge.textContent = "EVAL FAILED";
-                badge.style.color = "var(--accent-rose)";
-                badge.style.borderColor = "var(--accent-rose)";
-                btn.disabled = false;
-                btn.innerHTML = "Analyze Current Risk";
-              }
-            }
-          } catch (err) {
-            console.error("Error polling risk status:", err);
-          }
-        }, 1000);
-
-      } catch (err) {
-        console.error("Error starting risk analysis:", err);
-        btn.disabled = false;
-        btn.innerHTML = "Analyze Current Risk";
-        badge.textContent = "ERROR";
-      }
-    }
-
-    function renderRiskResults(zones) {
-      if (!zones || !Array.isArray(zones)) return;
-
-      const riskColors = {
-        "LOW": { bg: "rgba(16, 185, 129, 0.15)", text: "#10b981", bar: "#10b981" },
-        "MEDIUM": { bg: "rgba(245, 158, 11, 0.15)", text: "#f59e0b", bar: "#f59e0b" },
-        "HIGH": { bg: "rgba(249, 115, 22, 0.15)", text: "#f97316", bar: "#f97316" },
-        "CRITICAL": { bg: "rgba(239, 68, 68, 0.2)", text: "#ef4444", bar: "#ef4444" }
-      };
-
-      zones.forEach(z => {
-        const zoneKey = z.zone;
-        const scoreElem = document.getElementById(`risk-score-${zoneKey}`);
-        const levelElem = document.getElementById(`risk-level-${zoneKey}`);
-        const barElem = document.getElementById(`risk-bar-${zoneKey}`);
-        const reasonsElem = document.getElementById(`risk-reasons-${zoneKey}`);
-
-        const fDens = document.getElementById(`rf-density-${zoneKey}`);
-        const fSpeed = document.getElementById(`rf-speed-${zoneKey}`);
-        const fChaos = document.getElementById(`rf-chaos-${zoneKey}`);
-        const fGrowth = document.getElementById(`rf-growth-${zoneKey}`);
-
-        if (scoreElem) scoreElem.textContent = z.risk_score;
-
-        const colors = riskColors[z.risk_level] || riskColors["LOW"];
-        if (levelElem) {
-          levelElem.textContent = z.risk_level;
-          levelElem.style.background = colors.bg;
-          levelElem.style.color = colors.text;
-        }
-        if (barElem) {
-          barElem.style.width = `${Math.min(100, z.risk_score)}%`;
-          barElem.style.background = colors.bar;
-        }
-
-        if (z.features) {
-          if (fDens) fDens.textContent = `${Math.round(z.features.density)}%`;
-          if (fSpeed) fSpeed.textContent = `${Math.round(z.features.speed)}%`;
-          if (fChaos) fChaos.textContent = `${Math.round(z.features.chaos)}%`;
-          if (fGrowth) fGrowth.textContent = `${Math.round(z.features.growth)}%`;
-        }
-
-        if (reasonsElem && z.reason) {
-          reasonsElem.innerHTML = z.reason.map(r => `<li>${escapeHtml(r)}</li>`).join("");
-        }
-      });
-    }
-
-    // =========================================================================
-    // PHASE 6: SECURITY OPERATIONS PLATFORM LOGIC
-    // =========================================================================
-    let currentRole = localStorage.getItem("crowdeye_role") || "OPERATOR";
-
-    function updateRoleUI() {
-      const label = document.getElementById("current-role-label");
-      if (label) label.textContent = currentRole;
-    }
-
+    // Toggle Role
     function toggleRole() {
-      currentRole = currentRole === "ADMIN" ? "OPERATOR" : "ADMIN";
-      localStorage.setItem("crowdeye_role", currentRole);
-      updateRoleUI();
-    }
-
-    async function loadDashboardOverview() {
-      try {
-        const res = await fetch(`${API_BASE}/dashboard/overview`, {
-          headers: { "X-User-Role": currentRole }
-        });
-        if (!res.ok) return;
-        const data = await res.json();
-
-        const camElem = document.getElementById("val-total-cameras");
-        const pplElem = document.getElementById("val-detected-people");
-        const altElem = document.getElementById("val-active-alerts");
-        const rskElem = document.getElementById("val-high-risk-zones");
-
-        if (camElem) camElem.textContent = data.total_cameras;
-        if (pplElem) pplElem.textContent = Number(data.detected_people).toLocaleString();
-        if (altElem) altElem.textContent = data.active_alerts;
-        if (rskElem) rskElem.textContent = data.high_risk_zones;
-
-        const badge = document.getElementById("panel-active-alert-badge");
-        if (badge) badge.textContent = `${data.active_alerts} Active`;
-      } catch (err) {
-        console.debug("Dashboard overview fetch error:", err);
+      state.role = (state.role === 'OPERATOR') ? 'ADMIN' : 'OPERATOR';
+      const label = document.getElementById('current-role-label');
+      const btn = document.getElementById('role-toggle-btn');
+      if (label) label.textContent = state.role;
+      if (btn) {
+        if (state.role === 'ADMIN') {
+          btn.style.borderColor = 'var(--accent-purple)';
+          btn.style.color = 'var(--accent-purple)';
+          btn.style.background = 'rgba(168, 85, 247, 0.15)';
+        } else {
+          btn.style.borderColor = 'var(--accent-cyan)';
+          btn.style.color = 'var(--accent-cyan)';
+          btn.style.background = 'rgba(56, 189, 248, 0.15)';
+        }
       }
+      syncLiveTelemetry();
     }
 
-    async function loadCameraGrid() {
-      const container = document.getElementById("camera-grid");
-      if (!container) return;
+    // Toggle Overlays
+    function toggleOverlays() {
+      state.showBoxes = !state.showBoxes;
+      const btn = document.getElementById('btn-toggle-boxes');
+      if (btn) btn.textContent = state.showBoxes ? '👁️ Bounding Boxes: ON' : '🚫 Bounding Boxes: OFF';
+    }
 
-      try {
-        const res = await fetch(`${API_BASE}/cameras`, {
-          headers: { "X-User-Role": currentRole }
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const cameras = await res.json();
+    // Initialize Pedestrian Simulation for Canvas
+    function initSimulatedPersons() {
+      ['canvas-cam-1', 'canvas-cam-2', 'canvas-cam-3', 'canvas-cam-4'].forEach((id, cIdx) => {
+        const count = 12 + cIdx * 6;
+        state.persons[id] = [];
+        for (let i = 0; i < count; i++) {
+          state.persons[id].push({
+            id: 100 + i + cIdx * 50,
+            x: 20 + Math.random() * 260,
+            y: 30 + Math.random() * 120,
+            vx: (Math.random() - 0.5) * 1.5,
+            vy: (Math.random() - 0.5) * 1.5,
+            w: 16 + Math.random() * 6,
+            h: 34 + Math.random() * 8
+          });
+        }
+      });
+    }
+    initSimulatedPersons();
 
-        if (!cameras || cameras.length === 0) {
-          container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">No cameras registered.</div>`;
-          return;
+    // Render Canvas Loop
+    function renderCCTVCanvases() {
+      ['canvas-cam-1', 'canvas-cam-2', 'canvas-cam-3', 'canvas-cam-4'].forEach((canvasId, idx) => {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Auto size
+        if (canvas.width !== canvas.clientWidth) {
+          canvas.width = canvas.clientWidth || 320;
+          canvas.height = canvas.clientHeight || 180;
         }
 
-        container.innerHTML = cameras.map(cam => {
-          const status = (cam.status || "ACTIVE").toUpperCase();
-          const statusBadge = status === "ACTIVE" 
-            ? `<span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);">ACTIVE</span>`
-            : (status === "MAINTENANCE" 
-              ? `<span class="badge badge-warning">MAINTENANCE</span>` 
-              : `<span class="badge" style="background: rgba(148, 163, 184, 0.2); color: #94a3b8;">OFFLINE</span>`);
+        const W = canvas.width;
+        const H = canvas.height;
 
-          const risk = (cam.risk_level || "LOW").toUpperCase();
-          const riskBadge = risk === "CRITICAL"
-            ? `<span class="badge badge-critical">CRITICAL</span>`
-            : (risk === "HIGH"
-              ? `<span class="badge badge-warning">HIGH</span>`
-              : `<span class="badge badge-low">${risk}</span>`);
+        // Background dark venue floor
+        ctx.fillStyle = '#060a12';
+        ctx.fillRect(0, 0, W, H);
 
-          return `
-            <div class="card" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 1.2rem; display: flex; flex-direction: column; gap: 0.8rem;">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <div>
-                  <h4 style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.2rem;">${escapeHtml(cam.camera_name)}</h4>
-                  <span style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(cam.location || 'Concourse')} • <strong>${escapeHtml(cam.zone || 'Zone A')}</strong></span>
-                </div>
-                ${statusBadge}
-              </div>
+        // Security Scan Line
+        const time = Date.now() * 0.002;
+        const scanY = (time * 40) % H;
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.04)';
+        ctx.fillRect(0, scanY, W, 2);
 
-              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; text-align: center; background: rgba(0,0,0,0.25); padding: 0.6rem; border-radius: 6px; margin-top: 0.4rem;">
-                <div>
-                  <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">People</span>
-                  <strong style="font-size: 1rem; color: var(--text-primary);">${cam.people_count || 0}</strong>
-                </div>
-                <div>
-                  <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">Density</span>
-                  <strong style="font-size: 1rem; color: var(--accent-cyan);">${cam.density || 0} <span style="font-size: 0.7rem;">p/m²</span></strong>
-                </div>
-                <div>
-                  <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">Risk</span>
-                  <div style="margin-top: 0.15rem;">${riskBadge}</div>
-                </div>
-              </div>
-            </div>
-          `;
-        }).join('');
-      } catch (err) {
-        container.innerHTML = `<div style="grid-column: 1 / -1; color: var(--accent-rose); text-align: center; padding: 1.5rem;">Error loading camera grid: ${escapeHtml(err.message)}</div>`;
-      }
-    }
-
-    async function loadAlertPanel() {
-      const panel = document.getElementById("active-alerts-panel");
-      if (!panel) return;
-
-      try {
-        const res = await fetch(`${API_BASE}/alerts?status=ACTIVE`, {
-          headers: { "X-User-Role": currentRole }
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const alerts = await res.json();
-
-        const badge = document.getElementById("panel-active-alert-badge");
-        if (badge) badge.textContent = `${alerts.length} Active`;
-
-        if (!alerts || alerts.length === 0) {
-          panel.innerHTML = `<div style="text-align: center; color: var(--accent-emerald); padding: 1.5rem; background: rgba(16, 185, 129, 0.08); border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2);">
-            ✓ All zones operating normally. No active critical or warning alarms.
-          </div>`;
-          return;
+        // Grid lines
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < W; x += 40) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
         }
 
-        panel.innerHTML = alerts.map(a => {
-          const isCritical = a.alert_level === "CRITICAL";
-          const levelBadge = isCritical 
-            ? `<span class="badge badge-critical" style="font-size: 0.85rem; padding: 0.25rem 0.65rem;">CRITICAL</span>`
-            : `<span class="badge badge-warning" style="font-size: 0.85rem; padding: 0.25rem 0.65rem;">WARNING</span>`;
-          const borderColor = isCritical ? "rgba(244, 63, 94, 0.4)" : "rgba(245, 158, 11, 0.4)";
-          const bgColor = isCritical ? "rgba(244, 63, 94, 0.08)" : "rgba(245, 158, 11, 0.08)";
+        // Draw Simulated Persons
+        const persons = state.persons[canvasId] || [];
+        const isCritical = state.currentScenario === 'critical' && canvasId === 'canvas-cam-3';
+        const isCaution = state.currentScenario === 'medium' && (canvasId === 'canvas-cam-3' || canvasId === 'canvas-cam-2');
 
-          return `
-            <div style="background: ${bgColor}; border: 1px solid ${borderColor}; border-radius: 8px; padding: 0.9rem 1.2rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
-              <div style="display: flex; align-items: center; gap: 1rem; flex-grow: 1;">
-                ${levelBadge}
-                <div>
-                  <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">${escapeHtml(a.message || 'Safety alarm')}</div>
-                  <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">
-                    Camera: <strong>${escapeHtml(a.camera_name || 'Cam North')}</strong> • Zone: <strong>${escapeHtml(a.zone || a.zone_name || 'Zone A')}</strong> • Score: <strong style="color: ${isCritical ? 'var(--accent-rose)' : 'var(--accent-amber)'};">${a.risk_score}</strong>
-                  </div>
-                </div>
-              </div>
-              <button class="btn btn-secondary" style="border-color: var(--accent-emerald); color: var(--accent-emerald); padding: 0.35rem 0.85rem; font-size: 0.85rem;" onclick="resolveAlertAction('${a.id}')">
-                Resolve Incident
-              </button>
-            </div>
-          `;
-        }).join('');
-      } catch (err) {
-        panel.innerHTML = `<div style="text-align: center; color: var(--accent-rose); padding: 1rem;">Failed to fetch active alerts: ${escapeHtml(err.message)}</div>`;
-      }
-    }
+        const boxColor = isCritical ? '#f43f5e' : (isCaution ? '#f59e0b' : '#10b981');
 
-    async function resolveAlertAction(alertId) {
-      try {
-        const res = await fetch(`${API_BASE}/alerts/${alertId}/resolve`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "X-User-Role": currentRole
+        persons.forEach(p => {
+          // Update pos
+          p.x += p.vx * (isCritical ? 0.3 : 1.0);
+          p.y += p.vy * (isCritical ? 0.3 : 1.0);
+
+          if (p.x < 10) { p.x = 10; p.vx *= -1; }
+          if (p.x > W - 30) { p.x = W - 30; p.vx *= -1; }
+          if (p.y < 20) { p.y = 20; p.vy *= -1; }
+          if (p.y > H - 45) { p.y = H - 45; p.vy *= -1; }
+
+          // Draw Bounding Box & DeepSORT Tracking ID
+          if (state.showBoxes) {
+            ctx.strokeStyle = boxColor;
+            ctx.lineWidth = isCritical ? 2.5 : 1.5;
+            ctx.strokeRect(p.x, p.y, p.w, p.h);
+
+            // Top ID Label
+            ctx.fillStyle = boxColor;
+            ctx.fillRect(p.x, p.y - 12, 42, 12);
+            ctx.fillStyle = '#000';
+            ctx.font = '8px JetBrains Mono';
+            ctx.fillText('#' + p.id, p.x + 3, p.y - 3);
+
+            // Velocity vector
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+            ctx.moveTo(p.x + p.w / 2, p.y + p.h / 2);
+            ctx.lineTo(p.x + p.w / 2 + p.vx * 10, p.y + p.h / 2 + p.vy * 10);
+            ctx.stroke();
           }
+
+          // Person dot
+          ctx.fillStyle = boxColor;
+          ctx.beginPath();
+          ctx.arc(p.x + p.w / 2, p.y + 6, 3, 0, Math.PI * 2);
+          ctx.fill();
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        refreshSecurityData();
-      } catch (err) {
-        alert(`Error resolving alert: ${err.message}`);
+
+        // Overlay Watermark
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.font = '9px JetBrains Mono';
+        ctx.fillText('CAM 0' + (idx + 1) + ' • LIVE • 15.3 FPS', 10, 16);
+      });
+
+      requestAnimationFrame(renderCCTVCanvases);
+    }
+    requestAnimationFrame(renderCCTVCanvases);
+
+    // Scenario Switching Logic (Phase 7 Core)
+    function setScenario(level) {
+      state.currentScenario = level;
+      state.manualScenarioActive = true;
+
+      // Update Button Styles
+      document.querySelectorAll('.demo-btn').forEach(b => b.style.outline = 'none');
+      const activeBtn = document.getElementById('btn-demo-' + level);
+      if (activeBtn) activeBtn.style.outline = '2px solid #fff';
+
+      const banner = document.getElementById('incident-hero-banner');
+      const icon = document.getElementById('incident-icon');
+      const title = document.getElementById('incident-title');
+      const desc = document.getElementById('incident-desc');
+      const resolveBtn = document.getElementById('resolve-incident-btn');
+
+      // Metric elements
+      const mHeadcount = document.getElementById('metric-headcount');
+      const mHeadcountTrend = document.getElementById('metric-headcount-trend');
+      const mAlerts = document.getElementById('metric-active-alerts');
+      const mAlertSub = document.getElementById('metric-alert-subtext');
+      const mAlertBadge = document.getElementById('metric-alert-status-badge');
+      const mRisk = document.getElementById('metric-risk-score');
+      const mRiskLabel = document.getElementById('metric-risk-label');
+
+      // AI Factors
+      const rGauge = document.getElementById('risk-gauge');
+      const rScoreBig = document.getElementById('risk-score-big');
+      const rLevelBadge = document.getElementById('risk-level-badge');
+      const rSummary = document.getElementById('risk-summary-text');
+      const rDetail = document.getElementById('risk-detail-text');
+
+      const fDenText = document.getElementById('val-factor-density');
+      const fDenFill = document.getElementById('fill-factor-density');
+      const fVelText = document.getElementById('val-factor-velocity');
+      const fVelFill = document.getElementById('fill-factor-velocity');
+      const fChaosText = document.getElementById('val-factor-chaos');
+      const fChaosFill = document.getElementById('fill-factor-chaos');
+      const fGrowthText = document.getElementById('val-factor-growth');
+      const fGrowthFill = document.getElementById('fill-factor-growth');
+
+      // SVG Elements
+      const svgHeatC = document.getElementById('svg-heat-C');
+      const svgCountC = document.getElementById('svg-count-C');
+      const svgDenC = document.getElementById('svg-den-C');
+
+      // Cam 3 Badge
+      const cam3Badge = document.getElementById('badge-cam-3');
+
+      if (level === 'low') {
+        // Safe Flow
+        banner.className = 'incident-banner safe';
+        banner.style.background = '';
+        banner.style.borderColor = '';
+        icon.textContent = '🟢';
+        title.textContent = 'ALL VENUE SECTORS NORMAL • SAFETY COMPLIANT';
+        desc.textContent = 'Pedestrian density is within normal safety thresholds. Velocity vectors confirm laminar flow across all monitored gates.';
+        resolveBtn.style.display = 'none';
+
+        mHeadcount.textContent = '2,500';
+        mHeadcountTrend.textContent = '+0.8%/min';
+        mAlerts.textContent = '0';
+        mAlerts.style.color = 'var(--accent-emerald)';
+        mAlertSub.textContent = 'No Operator Actions Required';
+        mAlertBadge.textContent = 'CLEAR';
+        mRisk.innerHTML = '18 <span style="font-size: 1.1rem; color: var(--text-muted);">/100</span>';
+        mRisk.style.color = 'var(--accent-emerald)';
+        mRiskLabel.textContent = 'LEVEL: LOW (SAFE FLOW)';
+
+        rGauge.style.setProperty('--risk-percent', '18');
+        rScoreBig.textContent = '18';
+        rLevelBadge.className = 'risk-level-badge low';
+        rLevelBadge.textContent = 'LOW HAZARD';
+        rSummary.textContent = 'Normal Flow Within Safety Margins';
+        rDetail.textContent = 'All 4 telemetry factors remain stable. Pedestrian movement speed is uniform across all choke points.';
+
+        fDenText.textContent = '1.8 ppl/m² (Normal)'; fDenText.style.color = '#34d399';
+        fDenFill.style.width = '20%'; fDenFill.style.background = '#10b981';
+
+        fVelText.textContent = '1.4 m/s (Fluid)'; fVelText.style.color = '#34d399';
+        fVelFill.style.width = '15%'; fVelFill.style.background = '#10b981';
+
+        fChaosText.textContent = '0.12 (Laminar Flow)'; fChaosText.style.color = '#38bdf8';
+        fChaosFill.style.width = '12%'; fChaosFill.style.background = '#38bdf8';
+
+        fGrowthText.textContent = '+0.8%/s (Stable)'; fGrowthText.style.color = '#34d399';
+        fGrowthFill.style.width = '10%'; fGrowthFill.style.background = '#10b981';
+
+        if (svgHeatC) svgHeatC.setAttribute('fill', 'url(#heat-low)');
+        if (svgCountC) svgCountC.textContent = '940 ppl';
+        if (svgDenC) svgDenC.textContent = '1.8 ppl/m²';
+        if (cam3Badge) { cam3Badge.className = 'cctv-badge low'; cam3Badge.textContent = 'LOW RISK'; }
+
+        hideActiveAlertCard();
+
+        // Update Timeline
+        updateTimelineChart([2200, 2300, 2380, 2420, 2480, 2500], [12, 14, 15, 17, 18, 18]);
+
+      } else if (level === 'medium') {
+        // Influx / Caution
+        banner.className = 'incident-banner safe';
+        banner.style.background = 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(120, 53, 15, 0.3))';
+        banner.style.borderColor = 'var(--accent-amber)';
+        icon.textContent = '🟡';
+        title.textContent = 'ELEVATED CROWD INFLUX DETECTED IN ZONE C';
+        desc.textContent = 'Pedestrian density approaching caution threshold (2.8 ppl/m²). Flow deceleration observed. Monitoring active.';
+        resolveBtn.style.display = 'none';
+
+        mHeadcount.textContent = '3,450';
+        mHeadcountTrend.textContent = '+4.2%/min';
+        mAlerts.textContent = '0';
+        mAlerts.style.color = 'var(--accent-amber)';
+        mAlertSub.textContent = 'Elevated Flow Under Watch';
+        mAlertBadge.textContent = 'WATCH';
+        mRisk.innerHTML = '58 <span style="font-size: 1.1rem; color: var(--text-muted);">/100</span>';
+        mRisk.style.color = 'var(--accent-amber)';
+        mRiskLabel.textContent = 'LEVEL: MEDIUM (MONITORING)';
+
+        rGauge.style.setProperty('--risk-percent', '58');
+        rScoreBig.textContent = '58';
+        rLevelBadge.className = 'risk-level-badge medium';
+        rLevelBadge.textContent = 'MEDIUM RISK';
+        rSummary.textContent = 'Density Influx Approaching Threshold';
+        rDetail.textContent = 'Pedestrian velocity has slowed to 0.9 m/s at Zone C bottleneck. Growth rate elevated (+3.5%/s).';
+
+        fDenText.textContent = '2.8 ppl/m² (Elevated)'; fDenText.style.color = '#fbbf24';
+        fDenFill.style.width = '55%'; fDenFill.style.background = '#f59e0b';
+
+        fVelText.textContent = '0.9 m/s (Slowing)'; fVelText.style.color = '#fbbf24';
+        fVelFill.style.width = '48%'; fVelFill.style.background = '#f59e0b';
+
+        fChaosText.textContent = '0.45 (Mild Turbulence)'; fChaosText.style.color = '#fbbf24';
+        fChaosFill.style.width = '45%'; fChaosFill.style.background = '#f59e0b';
+
+        fGrowthText.textContent = '+3.5%/s (Accelerating)'; fGrowthText.style.color = '#fbbf24';
+        fGrowthFill.style.width = '40%'; fGrowthFill.style.background = '#f59e0b';
+
+        if (svgHeatC) svgHeatC.setAttribute('fill', 'url(#heat-med)');
+        if (svgCountC) svgCountC.textContent = '1,650 ppl';
+        if (svgDenC) svgDenC.textContent = '2.8 ppl/m²';
+        if (cam3Badge) { cam3Badge.className = 'cctv-badge medium'; cam3Badge.textContent = 'CAUTION'; }
+
+        hideActiveAlertCard();
+
+        // Update Timeline
+        updateTimelineChart([2400, 2600, 2850, 3100, 3320, 3450], [18, 22, 31, 42, 51, 58]);
+
+      } else if (level === 'critical') {
+        // Critical Surge Alarm
+        banner.className = 'incident-banner critical';
+        banner.style.background = '';
+        banner.style.borderColor = '';
+        icon.textContent = '🚨';
+        title.textContent = 'CRITICAL SURGE DETECTED • ZONE C (MAIN STAGE) • STAMPEDE RISK';
+        desc.textContent = 'Extreme compaction (>4.5 ppl/m²). Velocity collapse (0.3 m/s) with high directional chaos. Immediate operator action required!';
+        resolveBtn.style.display = 'inline-flex';
+
+        mHeadcount.textContent = '4,820';
+        mHeadcountTrend.textContent = '+18.5%/min';
+        mAlerts.textContent = '1';
+        mAlerts.style.color = 'var(--accent-rose)';
+        mAlertSub.textContent = '1 Active Hazard Requires Action';
+        mAlertBadge.textContent = 'CRITICAL';
+        mRisk.innerHTML = '92.5 <span style="font-size: 1.1rem; color: var(--text-muted);">/100</span>';
+        mRisk.style.color = 'var(--accent-rose)';
+        mRiskLabel.textContent = 'LEVEL: CRITICAL HAZARD';
+
+        rGauge.style.setProperty('--risk-percent', '92.5');
+        rScoreBig.textContent = '92';
+        rLevelBadge.className = 'risk-level-badge critical';
+        rLevelBadge.textContent = 'CRITICAL HAZARD';
+        rSummary.textContent = 'Stampede & Crush Probability High';
+        rDetail.textContent = 'Severe bottleneck forming at Zone C Stage exit. Velocity deficit at 85%. Multi-directional movement turbulence detected.';
+
+        fDenText.textContent = '4.6 ppl/m² (CRITICAL)'; fDenText.style.color = '#f87171';
+        fDenFill.style.width = '92%'; fDenFill.style.background = '#f43f5e';
+
+        fVelText.textContent = '0.3 m/s (Constricted)'; fVelText.style.color = '#f87171';
+        fVelFill.style.width = '88%'; fVelFill.style.background = '#f43f5e';
+
+        fChaosText.textContent = '0.88 (Severe Chaos)'; fChaosText.style.color = '#f87171';
+        fChaosFill.style.width = '85%'; fChaosFill.style.background = '#f43f5e';
+
+        fGrowthText.textContent = '+12.4%/s (Surge Spike)'; fGrowthText.style.color = '#f87171';
+        fGrowthFill.style.width = '80%'; fGrowthFill.style.background = '#f43f5e';
+
+        if (svgHeatC) svgHeatC.setAttribute('fill', 'url(#heat-crit)');
+        if (svgCountC) svgCountC.textContent = '2,890 ppl';
+        if (svgDenC) svgDenC.textContent = '4.6 ppl/m²';
+        if (cam3Badge) { cam3Badge.className = 'cctv-badge critical'; cam3Badge.textContent = 'CRITICAL SURGE'; }
+
+        showActiveAlertCard();
+
+        // Update Timeline
+        updateTimelineChart([2500, 2900, 3450, 4100, 4600, 4820], [18, 30, 52, 74, 88, 92.5]);
+
+        // Play audio chime
+        try {
+          const audio = document.getElementById('alert-siren');
+          if (audio) { audio.currentTime = 0; audio.play().catch(() => {}); }
+        } catch(e) {}
+      }
+
+      // Sync with Live FastAPI Backend on port 8000
+      fetch('http://localhost:8000/demo/scenario', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Role': state.role },
+        body: JSON.stringify({ scenario: level })
+      }).catch(() => {});
+    }
+
+    function showActiveAlertCard() {
+      const list = document.getElementById('active-incident-list');
+      if (!list) return;
+      list.innerHTML = `
+        <div style="background: rgba(244, 63, 94, 0.12); border: 1px solid var(--accent-rose); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center; animation: alert-pulse 1.8s infinite;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span class="badge" style="background: var(--accent-rose); color: #fff;">CRITICAL ALARM</span>
+              <strong style="color: #fff; font-size: 0.95rem;">Zone C (Main Stage)</strong>
+            </div>
+            <p style="font-size: 0.8rem; color: #fca5a5; margin-top: 0.3rem;">
+              Stampede risk score 92.5 • Compaction density >4.5 ppl/m² • Flow halted.
+            </p>
+          </div>
+          <button class="btn btn-danger" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;" onclick="resolveCurrentIncident()">
+            Resolve Incident
+          </button>
+        </div>
+      `;
+    }
+
+    function hideActiveAlertCard() {
+      const list = document.getElementById('active-incident-list');
+      if (!list) return;
+      list.innerHTML = `
+        <div id="incident-empty-state" style="padding: 1.5rem; text-align: center; background: rgba(0,0,0,0.25); border-radius: 10px; border: 1px dashed var(--border-subtle);">
+          <span style="font-size: 1.8rem; display: block; margin-bottom: 0.5rem;">🛡️</span>
+          <strong style="color: #34d399; font-size: 0.95rem;">No Active Safety Violations</strong>
+          <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">All monitored venues operating within normal parameters.</p>
+        </div>
+      `;
+    }
+
+    // Resolve Incident Action
+    function resolveCurrentIncident() {
+      // Call backend resolution API on port 8000
+      fetch('http://localhost:8000/alerts/active/resolve', {
+        method: 'PUT',
+        headers: { 'X-User-Role': state.role }
+      }).catch(() => {});
+
+      // Switch back to normal
+      setScenario('low');
+
+      // Visual Confirmation Toast
+      const banner = document.getElementById('incident-hero-banner');
+      banner.className = 'incident-banner safe';
+      document.getElementById('incident-title').textContent = '✅ HAZARD RESOLVED • ZONE C DISPATCH DISPERSED CROWD';
+      document.getElementById('incident-desc').textContent = 'Security stewards successfully opened evacuation corridor. Density normalized to 1.8 ppl/m². Incident logged to audit.';
+    }
+
+    // Auto 15s Pitch Demo Flow
+    function startAutoPitchDemo() {
+      if (state.autoPitchTimer) clearTimeout(state.autoPitchTimer);
+
+      const btn = document.getElementById('btn-demo-auto');
+      if (btn) btn.textContent = '⏳ Running Demo Flow...';
+
+      // Step 1: Normal
+      setScenario('low');
+
+      // Step 2: After 3.5s, Crowd Influx
+      state.autoPitchTimer = setTimeout(() => {
+        setScenario('medium');
+      }, 3500);
+
+      // Step 3: After 7.5s, Critical Hazard
+      state.autoPitchTimer = setTimeout(() => {
+        setScenario('critical');
+      }, 7500);
+
+      // Step 4: After 13s, Operator Resolves
+      state.autoPitchTimer = setTimeout(() => {
+        resolveCurrentIncident();
+        if (btn) {
+          btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Auto 15s Pitch Demo`;
+        }
+      }, 13500);
+    }
+
+    function resetToBaseline() {
+      if (state.autoPitchTimer) clearTimeout(state.autoPitchTimer);
+      state.manualScenarioActive = false;
+      document.querySelectorAll('.demo-btn').forEach(b => b.style.outline = 'none');
+      syncLiveTelemetry();
+    }
+
+    // Camera Modal
+    function openCameraModal(camId, loc) {
+      document.getElementById('modal-cam-title').textContent = camId + ' • Deep Inspection';
+      document.getElementById('modal-cam-loc').textContent = loc;
+      document.getElementById('camModal').classList.add('open');
+
+      const modalCanvas = document.getElementById('modal-zoom-canvas');
+      if (modalCanvas) {
+        modalCanvas.width = 640;
+        modalCanvas.height = 360;
+        const mCtx = modalCanvas.getContext('2d');
+        mCtx.fillStyle = '#060a14';
+        mCtx.fillRect(0, 0, 640, 360);
+
+        // Draw crosshair
+        mCtx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+        mCtx.beginPath();
+        mCtx.moveTo(320, 0); mCtx.lineTo(320, 360);
+        mCtx.moveTo(0, 180); mCtx.lineTo(640, 180);
+        mCtx.stroke();
+
+        mCtx.fillStyle = '#38bdf8';
+        mCtx.font = '14px JetBrains Mono';
+        mCtx.fillText(camId + ' REALTIME HIGH-RES STREAM • HOMOGRAPHY ACTIVE', 20, 30);
       }
     }
 
-    function refreshSecurityData() {
-      loadDashboardOverview();
-      loadCameraGrid();
-      loadAlertPanel();
+    function closeModalDirect() {
+      document.getElementById('camModal').classList.remove('open');
     }
 
-    // Connect to WebSocket for live early warning push alerts & Phase 6 Realtime events
-    function initRealtimeWebSocket() {
-      const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const wsHost = window.location.hostname || "localhost";
-      const wsUrl = `${wsProtocol}//${wsHost}:8000/ws/realtime`;
+    function closeCameraModal(e) {
+      if (e.target.id === 'camModal') closeModalDirect();
+    }
 
+    function highlightZone(zoneName) {
+      const banner = document.getElementById('incident-hero-banner');
+      banner.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function refreshCameraGrid() {
+      initSimulatedPersons();
+      syncLiveTelemetry();
+    }
+
+    // Chart.js Timeline Updater
+    function updateTimelineChart(headcountArr, riskArr) {
+      if (!state.chartInstance) return;
+      state.chartInstance.data.datasets[0].data = headcountArr;
+      state.chartInstance.data.datasets[1].data = riskArr;
+      state.chartInstance.update();
+    }
+
+    // Live Backend Sync Engine (Syncs real data from port 8000)
+    async function syncLiveTelemetry() {
       try {
-        const ws = new WebSocket(wsUrl);
+        const [overviewRes, camsRes, alertsRes, healthRes] = await Promise.all([
+          fetch('http://localhost:8000/dashboard/overview', { headers: { 'X-User-Role': state.role } }).then(r => r.ok ? r.json() : null),
+          fetch('http://localhost:8000/cameras', { headers: { 'X-User-Role': state.role } }).then(r => r.ok ? r.json() : null),
+          fetch('http://localhost:8000/alerts?status=ACTIVE', { headers: { 'X-User-Role': state.role } }).then(r => r.ok ? r.json() : null),
+          fetch('http://localhost:8000/health').then(r => r.ok ? r.json() : null)
+        ]);
 
+        // 1. Health Status
+        if (healthRes) {
+          const wsBadge = document.getElementById('system-status-indicator');
+          if (wsBadge) {
+            wsBadge.textContent = healthRes.database === 'connected' ? 'SUPABASE LIVE' : 'TELEMETRY LIVE';
+          }
+        }
+
+        // 2. Real Overview KPIs (Zero Fake Values!)
+        if (overviewRes && !state.manualScenarioActive) {
+          const mCams = document.getElementById('metric-cameras');
+          const mHeadcount = document.getElementById('metric-headcount');
+          const mAlerts = document.getElementById('metric-active-alerts');
+          const mAlertBadge = document.getElementById('metric-alert-status-badge');
+          const mAlertSub = document.getElementById('metric-alert-subtext');
+          const mRisk = document.getElementById('metric-risk-score');
+          const mRiskLabel = document.getElementById('metric-risk-label');
+
+          if (mCams && overviewRes.total_cameras !== undefined) {
+            mCams.textContent = `${overviewRes.total_cameras} / ${overviewRes.total_cameras}`;
+          }
+
+          if (mHeadcount && overviewRes.detected_people !== undefined) {
+            mHeadcount.textContent = overviewRes.detected_people.toLocaleString();
+          }
+
+          if (mAlerts && overviewRes.active_alerts !== undefined) {
+            mAlerts.textContent = overviewRes.active_alerts;
+            if (overviewRes.active_alerts > 0) {
+              mAlerts.style.color = 'var(--accent-rose)';
+              if (mAlertBadge) mAlertBadge.textContent = 'ACTIVE';
+              if (mAlertSub) mAlertSub.textContent = `${overviewRes.active_alerts} Action(s) Required`;
+            } else {
+              mAlerts.style.color = 'var(--accent-emerald)';
+              if (mAlertBadge) mAlertBadge.textContent = 'CLEAR';
+              if (mAlertSub) mAlertSub.textContent = 'No Actions Required';
+            }
+          }
+        }
+
+        // 3. Real Active Alerts Handling
+        if (alertsRes && Array.isArray(alertsRes) && !state.manualScenarioActive) {
+          if (alertsRes.length > 0) {
+            const firstAlert = alertsRes[0];
+            const banner = document.getElementById('incident-hero-banner');
+            banner.className = 'incident-banner critical';
+            document.getElementById('incident-icon').textContent = '🚨';
+            document.getElementById('incident-title').textContent = `${firstAlert.alert_level || 'CRITICAL'} • ${firstAlert.message}`;
+            document.getElementById('incident-desc').textContent = `Detected in ${firstAlert.zone_name || 'monitored zone'}. Risk score: ${firstAlert.risk_score || 90}. Immediate action advised.`;
+            document.getElementById('resolve-incident-btn').style.display = 'inline-flex';
+            showActiveAlertCard();
+          } else {
+            const banner = document.getElementById('incident-hero-banner');
+            banner.className = 'incident-banner safe';
+            document.getElementById('incident-icon').textContent = '🟢';
+            document.getElementById('incident-title').textContent = 'ALL VENUE SECTORS NORMAL • SAFETY COMPLIANT';
+            document.getElementById('incident-desc').textContent = 'Pedestrian density is within normal safety thresholds. Velocity vectors confirm laminar flow across all monitored gates.';
+            document.getElementById('resolve-incident-btn').style.display = 'none';
+            hideActiveAlertCard();
+          }
+        }
+
+        // 4. Real Registered Camera Metadata
+        if (camsRes && Array.isArray(camsRes) && camsRes.length > 0) {
+          camsRes.slice(0, 4).forEach((cam, idx) => {
+            const id = idx + 1;
+            const lEl = document.getElementById(`label-cam-${id}`);
+            const cEl = document.getElementById(`count-cam-${id}`);
+            const dEl = document.getElementById(`den-cam-${id}`);
+            const bEl = document.getElementById(`badge-cam-${id}`);
+
+            if (lEl) lEl.textContent = `${cam.camera_name || 'CAM-0' + id} • ${cam.zone || 'Zone ' + String.fromCharCode(65 + idx)}`;
+            if (cEl && cam.people_count !== undefined && !state.manualScenarioActive) cEl.textContent = cam.people_count;
+            if (dEl && cam.density !== undefined && !state.manualScenarioActive) dEl.textContent = `${cam.density} ppl/m²`;
+            if (bEl && cam.risk_level && !state.manualScenarioActive) {
+              const rk = cam.risk_level.toLowerCase();
+              bEl.className = `cctv-badge ${rk === 'critical' ? 'critical' : (rk === 'high' || rk === 'medium' ? 'medium' : 'low')}`;
+              bEl.textContent = `${cam.risk_level} RISK`;
+            }
+          });
+        }
+      } catch (err) {
+        // Fallback gracefully without breaking UI
+      }
+    }
+
+    // Polling Sync every 4 seconds
+    setInterval(syncLiveTelemetry, 4000);
+
+    // WebSocket Live Bus
+    function initWebSocket() {
+      try {
+        const ws = new WebSocket('ws://localhost:8000/ws/realtime');
         ws.onopen = () => {
-          const statusElem = document.getElementById("system-status-indicator");
-          if (statusElem) statusElem.textContent = "CONTROL ROOM CONNECTED";
-          ws.send(JSON.stringify({ action: "subscribe", topic: "alerts" }));
+          ws.send(JSON.stringify({ action: 'subscribe', topic: 'alerts' }));
+          const indicator = document.getElementById('system-status-indicator');
+          if (indicator) indicator.textContent = 'WEBSOCKET ACTIVE';
         };
+        ws.onmessage = () => {
+          syncLiveTelemetry();
+        };
+      } catch(e) {}
+    }
 
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            const ev = data.event || data.type;
+    // Initialize Chart.js Telemetry Graph on Page Load
+    window.addEventListener('DOMContentLoaded', () => {
+      const ctx = document.getElementById('timelineChart')?.getContext('2d');
+      if (ctx) {
+        const labels = ['-25m', '-20m', '-15m', '-10m', '-5m', 'NOW'];
+        const dataHeadcount = [2100, 2250, 2380, 2420, 2480, 2500];
+        const dataRisk = [12, 14, 15, 18, 17, 18];
 
-            if (ev === "alert_created" || ev === "alert_resolved") {
-              refreshSecurityData();
-            } else if (ev === "camera_status") {
-              loadCameraGrid();
-              loadDashboardOverview();
-            } else if (ev === "risk_update") {
-              const zoneKey = data.zone;
-              const scoreElem = document.getElementById(`risk-score-${zoneKey}`);
-              const levelElem = document.getElementById(`risk-level-${zoneKey}`);
-              const barElem = document.getElementById(`risk-bar-${zoneKey}`);
-              const reasonsElem = document.getElementById(`risk-reasons-${zoneKey}`);
-
-              if (scoreElem) scoreElem.textContent = data.risk_score;
-              if (levelElem) {
-                levelElem.textContent = data.risk_level;
-                levelElem.style.color = data.risk_level === "CRITICAL" ? "#ef4444" : "#f97316";
+        state.chartInstance = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: 'Headcount',
+                data: dataHeadcount,
+                borderColor: '#38bdf8',
+                backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                yAxisID: 'y',
+                tension: 0.35,
+                borderWidth: 2,
+                fill: true,
+                pointRadius: 3
+              },
+              {
+                label: 'Risk Index (0-100)',
+                data: dataRisk,
+                borderColor: '#f43f5e',
+                backgroundColor: 'transparent',
+                yAxisID: 'y1',
+                tension: 0.35,
+                borderWidth: 2,
+                pointRadius: 3
               }
-              if (barElem) {
-                barElem.style.width = `${data.risk_score}%`;
-                barElem.style.background = data.risk_level === "CRITICAL" ? "#ef4444" : "#f97316";
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                labels: { color: '#94a3b8', font: { size: 10, family: 'Inter' } }
               }
-              if (reasonsElem && data.reasons) {
-                reasonsElem.innerHTML = data.reasons.map(r => `<li>${escapeHtml(r)}</li>`).join("");
+            },
+            scales: {
+              x: {
+                grid: { color: 'rgba(255,255,255,0.05)' },
+                ticks: { color: '#64748b', font: { size: 9 } }
+              },
+              y: {
+                type: 'linear',
+                position: 'left',
+                grid: { color: 'rgba(255,255,255,0.05)' },
+                ticks: { color: '#38bdf8', font: { size: 9 } }
+              },
+              y1: {
+                type: 'linear',
+                position: 'right',
+                grid: { drawOnChartArea: false },
+                ticks: { color: '#f43f5e', font: { size: 9 } },
+                min: 0,
+                max: 100
               }
             }
-          } catch (e) {
-            // Non-JSON frame
           }
-        };
-
-        ws.onclose = () => {
-          const statusElem = document.getElementById("system-status-indicator");
-          if (statusElem) statusElem.textContent = "STANDBY RECONNECTING";
-          setTimeout(initRealtimeWebSocket, 3000);
-        };
-      } catch (err) {
-        console.debug("Realtime WebSocket connection standby:", err);
-      }
-    }
-
-    // TASK 15: HACKATHON DEMO FLOW CONTROLLERS
-    async function triggerDemoScenario(scenario) {
-      try {
-        const res = await fetch(`${API_BASE}/demo/scenario`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-User-Role": currentRole
-          },
-          body: JSON.stringify({ scenario: scenario })
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        refreshSecurityData();
-      } catch (err) {
-        console.error("Demo scenario trigger error:", err);
       }
-    }
 
-    async function runAutomatedDemoSequence() {
-      // Step 1: Low crowd (normal)
-      await triggerDemoScenario('low');
-      setTimeout(async () => {
-        // Step 2: Medium crowd (influx)
-        await triggerDemoScenario('medium');
-        setTimeout(async () => {
-          // Step 3: Critical surge (alarm triggered!)
-          await triggerDemoScenario('critical');
-        }, 3000);
-      }, 3000);
-    }
-
-    // Initialize default grid view on canvas
-    window.addEventListener("load", () => {
-      const canvas = document.getElementById("zoneHeatmapCanvas");
-      if (canvas) {
-        const ctx = canvas.getContext("2d");
-        ctx.fillStyle = "#070a10";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
-      updateRoleUI();
-      refreshSecurityData();
-      initRealtimeWebSocket();
+      // Initial Sync & WebSocket
+      syncLiveTelemetry();
+      initWebSocket();
     });
   </script>
 </body>
 </html>
-
-

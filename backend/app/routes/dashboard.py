@@ -30,17 +30,13 @@ def get_dashboard_overview(user: Dict[str, Any] = Depends(require_operator)):
 
     # Calculate detected people and high-risk zones across all cameras
     total_people = sum(c.get("people_count", 0) for c in cameras)
-    if total_people == 0:
-        total_people = 2500
 
     high_risk_count = sum(
         1 for c in cameras if str(c.get("risk_level", "")).upper() in ("HIGH", "CRITICAL")
     )
-    if high_risk_count == 0:
-        high_risk_count = 2
 
     return {
-        "total_cameras": total_cameras if total_cameras > 0 else 10,
+        "total_cameras": total_cameras,
         "active_alerts": active_alerts,
         "high_risk_zones": high_risk_count,
         "detected_people": total_people

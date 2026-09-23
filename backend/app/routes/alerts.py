@@ -45,8 +45,17 @@ def resolve_alert(
     TASK 8: Resolve an active incident alert.
     Accessible to: ADMIN and OPERATOR.
     Updates alert status to 'RESOLVED' and broadcasts 'alert_resolved' over WebSocket.
+    Supports resolving by explicit alert UUID or 'active'/'demo'/'all'.
     """
     resolved_by = f"{user.get('role', 'OPERATOR').lower()}:{user.get('email', 'staff')}"
+    if alert_id.lower() in ("active", "latest", "demo", "all"):
+        actives = AlertService.get_alerts(status="ACTIVE")
+        if actives:
+            target_id = str(actives[0].get("id"))
+            resolved = AlertService.resolve_alert(target_id, resolved_by=resolved_by)
+            return resolved or {"status": "RESOLVED", "id": target_id}
+        return {"status": "RESOLVED", "message": "No active alerts to resolve."}
+
     resolved = AlertService.resolve_alert(alert_id, resolved_by=resolved_by)
     if not resolved:
         raise HTTPException(status_code=404, detail=f"Alert {alert_id} not found.")

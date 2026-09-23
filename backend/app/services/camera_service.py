@@ -43,6 +43,7 @@ class CameraService:
                     results = []
                     for row in res.data:
                         cid = str(row.get("id"))
+                        cached = _cameras_cache.get(cid, {})
                         cam = {
                             "id": cid,
                             "event_id": row.get("event_id"),
@@ -52,9 +53,9 @@ class CameraService:
                             "location": row.get("location") or "Main Concourse",
                             "status": row.get("status") or "ACTIVE",
                             "zone_config": row.get("zone_config") or {},
-                            "people_count": row.get("people_count", 0),
-                            "density": row.get("density", 0.0),
-                            "risk_level": row.get("risk_level", "LOW")
+                            "people_count": cached.get("people_count", row.get("people_count", 0)),
+                            "density": cached.get("density", row.get("density", 0.0)),
+                            "risk_level": cached.get("risk_level", row.get("risk_level", "LOW"))
                         }
                         # Update cache
                         _cameras_cache[cid] = cam
