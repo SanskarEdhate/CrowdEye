@@ -66,8 +66,9 @@ package-lock.json
 *.bin
 *.tflite
 *.engine
-models/
+/models/
 ai/models/
+!backend/app/models/
 yolov8n.pt
 
 # -----------------------------------------------------------------------------

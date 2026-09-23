@@ -55,7 +55,7 @@ async def upload_video_for_detection(
 @router.get("/detection/status/{job_id}", response_model=JobStatusResponse)
 def get_detection_status(job_id: str):
     """
-    API 2: Polls the current processing status and percentage progress of a job.
+    API 2: Polls the current processing status, percentage progress, live count, and frame boxes.
     """
     job = JobService.get_job(job_id)
     if not job:
@@ -65,11 +65,15 @@ def get_detection_status(job_id: str):
         job_id=job["job_id"],
         status=job["status"],
         progress=job.get("progress", 0),
+        current_count=job.get("current_count", 0),
+        current_frame=job.get("current_frame", 0),
+        total_frames=job.get("total_frames", 0),
+        boxes=job.get("boxes", []),
         message=job.get("error")
     )
 
 
-@router.get("/detection/result/{job_id}")
+@router.get("/detection/result/{job_id}", response_model=JobResultResponse)
 def get_detection_result(job_id: str):
     """
     API 3: Retrieves the final detection result and crowd headcounts for a completed job.
@@ -78,30 +82,34 @@ def get_detection_result(job_id: str):
     if not job:
         raise HTTPException(status_code=404, detail=f"Job '{job_id}' not found.")
 
-    if job["status"] == JobStatus.QUEUED or job["status"] == JobStatus.PROCESSING:
-        return {
-            "job_id": job_id,
-            "status": job["status"],
-            "progress": job.get("progress", 0),
-            "message": "Processing in progress. Please continue polling."
-        }
+    if str(job["status"]) in ("queued", "processing"):
+        return JobResultResponse(
+            job_id=job_id,
+            status=job["status"],
+            people_count=job.get("current_count", 0),
+            total_frames=job.get("total_frames", 0),
+            error="Processing in progress. Please continue polling."
+        )
 
-    if job["status"] == JobStatus.FAILED:
-        return {
-            "job_id": job_id,
-            "status": "failed",
-            "error": job.get("error", "Unknown processing error")
-        }
+    if str(job["status"]) == "failed":
+        return JobResultResponse(
+            job_id=job_id,
+            status=JobStatus.FAILED,
+            people_count=0,
+            error=job.get("error", "Unknown processing error")
+        )
 
     res = job.get("result") or {}
-    return {
-        "job_id": job_id,
-        "status": "completed",
-        "people_count": res.get("people_count", 0),
-        "average_people": res.get("average_people", 0),
-        "max_people": res.get("max_people", 0),
-        "total_frames": res.get("total_frames", 0),
-        "duration": res.get("duration", 0),
-        "camera_id": res.get("camera_id"),
-        "supabase_logged": res.get("supabase_logged", False)
-    }
+    return JobResultResponse(
+        job_id=job_id,
+        status=JobStatus.COMPLETED,
+        people_count=res.get("people_count", 0),
+        average_people=res.get("average_people", 0),
+        max_people=res.get("max_people", 0),
+        total_frames=res.get("total_frames", 0),
+        duration=res.get("duration", 0),
+        camera_id=res.get("camera_id"),
+        supabase_logged=res.get("supabase_logged", False),
+        sample_frames=res.get("sample_frames", []),
+        initial_boxes=res.get("initial_boxes", [])
+    )
