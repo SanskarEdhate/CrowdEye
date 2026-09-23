@@ -10,37 +10,86 @@ This document specifies the technical blueprint for the **CrowdEye AI** platform
 +-------------------------------------------------------------+
 |                      PRESENTATION TIER                      |
 |                  Vanilla HTML5 / CSS3 / JS                  |
-|   (Dashboard, Monitoring Upload, Leaflet GIS, Chart.js)    |
+|  - Real-time DeepSORT Canvas (Bounding Boxes, Trajectories) |
+|  - Telemetry Dashboard (Active Tracks, Direction, Velocity) |
+|  - Leaflet GIS, Chart.js Analytics                         |
 +------------------------------+------------------------------+
                                |
-                               | Multipart Video Upload / Status Polling
+                               | REST Upload / Status Polling + WebSocket (/ws/tracking)
                                v
 +-------------------------------------------------------------+
 |                     APPLICATION TIER                        |
 |                     FastAPI + Uvicorn                       |
-|   (POST /detection/video, GET /status, BackgroundTasks)     |
+|   - POST /tracking/start, GET /tracking/status/{job_id}     |
+|   - GET /tracking/result/{job_id}, WebSocket Streaming      |
+|   - TrackingWorker BackgroundTasks Engine                   |
 +------------------------------+------------------------------+
                                |
-                               | Spawns Background Job
+                               | Spawns DeepSORT Tracking Worker
                                v
 +-------------------------------------------------------------+
-|                   AI PERCEPTION WORKER (Phase 2)            |
-|         OpenCV Video Reader  -->  YOLOv8 Detector           |
-|         (Frame Extraction)        (Person Bounding Boxes)   |
+|                 AI PERCEPTION & TRACKING WORKER (Phase 3)   |
+|  1. OpenCV Video Frame Reader                               |
+|  2. YOLOv8 Detection (Class 0: Person)                      |
+|  3. DeepSORT Appearance-based Multi-Object Tracker          |
+|     (MobileNet Embedder, max_age=30, n_init=2)              |
+|  4. TrackHistory (10-second Rolling Spatiotemporal Memory)  |
+|  5. MovementAnalyzer (8-Way Direction + px/s Velocity)      |
 +------------------------------+------------------------------+
                                |
-                               | Telemetry Ingestion (Service Role)
+                               | Telemetry Ingestion (5s Batches)
                                v
 +-------------------------------------------------------------+
 |                        DATA TIER                            |
 |                   Supabase PostgreSQL                       |
-|   (users, events, cameras, crowd_logs, alerts + RLS)        |
+|   - tracking_jobs (Job Status, Progress, Total Unique)      |
+|   - person_tracking (x, y, direction, speed, timestamp)     |
+|   - crowd_logs, users, events, cameras, alerts + RLS        |
 +-------------------------------------------------------------+
 ```
 
 ---
 
-## 1.1 Phase 2 Video Ingestion Pipeline Flow
+## 1.1 Video Ingestion & Tracking Pipeline Flow (Phase 2 & 3)
+
+```
+[ CCTV Video / Recording (.mp4) ]
+            |
+            v
+[ FastAPI: POST /tracking/start ]
+            |
+            v
+[ TrackingService: Insert tracking_jobs (status: 'queued') ]
+            |
+            v
+[ FastAPI BackgroundTasks: TrackingWorker ]
+            |
+            v
+[ Frame Extraction: cv2.VideoCapture ]
+            |
+            v
+[ YOLOv8: Person Detections (Class 0, Conf >= 0.45) ]
+            |
+            v
+[ DeepSORT Tracker: Feature Extraction (MobileNet) + Kalman Filter ]
+            |
+            v
+[ TrackHistory: In-memory coordinate buffer (10s sliding window) ]
+            |
+            v
+[ MovementAnalyzer: Direction (8-way) + Relative Speed (px/s) ]
+            |
+      +-----+-------------------------------+
+      |                                     |
+      v (Real-time Broadcast)               v (Batched every 5s)
+[ TrackingConnectionManager ]        [ TrackingService.batch_insert() ]
+      |                                     |
+      v                                     v
+[ WebSocket: /ws/tracking/{job_id} ] [ Supabase: person_tracking ]
+      |                                     |
+      v                                     v
+[ Frontend HTML5 Canvas (Visualizer) ] [ Supabase: tracking_jobs ('completed') ]
+```
 
 ```
 [ CCTV Video / Recording ]

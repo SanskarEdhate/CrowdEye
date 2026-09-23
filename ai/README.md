@@ -117,7 +117,7 @@ Developer-only local testing script:
 
 ---
 
-## 5. Testing Steps
+## 5. Testing Steps (Phase 2)
 
 1. **Verify Weights & Package**:
    ```bash
@@ -131,3 +131,49 @@ Developer-only local testing script:
    ```bash
    python ai/detection/demo_viewer.py videos/input/test.mp4
    ```
+
+---
+
+## 6. Phase 3: DeepSORT Person Tracking + Movement Analysis
+
+Phase 3 upgrades the system from answering *"How many people are present?"* to *"How are people moving inside the crowd?"*
+
+### 6.1 Tracking Architecture
+
+```
+ai/
+├── tracking/
+│   ├── __init__.py           # Exports Tracker, TrackHistory, MovementAnalyzer
+│   ├── deepsort_tracker.py   # Appearance-based DeepSORT tracker (MobileNet)
+│   ├── track_history.py      # Rolling coordinate buffer (10s window)
+│   └── movement_analyzer.py  # 8-way directional heading + velocity (px/s)
+└── visualization/
+    ├── __init__.py
+    └── tracking_viewer.py    # Local GUI viewer with trajectories & vectors
+```
+
+### 6.2 Key Parameters & Algorithms
+
+- **Embedder**: `MobileNet` via `deep-sort-realtime`. Extracts visual appearance feature vectors to persist unique person IDs through occlusions.
+- **Track Lifecycle**:
+  - `max_age = 30`: Tracks survive up to 30 consecutive missed detections before termination.
+  - `n_init = 2`: Tracks require 2 consecutive detections to graduate to `CONFIRMED`.
+  - `max_iou_distance = 0.7`: Kalman filter spatial gating distance.
+- **Direction Calculation**:
+  - Computes $\theta = \operatorname{atan2}(-\Delta y, \Delta x)$ over the last 10 frames.
+  - Classified into 8 cardinal compass directions: `UP`, `DOWN`, `LEFT`, `RIGHT`, `UP-LEFT`, `UP-RIGHT`, `DOWN-LEFT`, `DOWN-RIGHT`, or `STATIONARY` if movement $\le 5$ pixels.
+- **Relative Speed**:
+  - Strictly measured in **`pixels/sec`**:
+    $$\text{speed} = \frac{\sqrt{\Delta x^2 + \Delta y^2}}{\Delta t}$$
+  - No meters/second conversion is performed, avoiding inaccuracies due to lack of camera calibration.
+- **Track History Window**:
+  - Stores `(x, y, timestamp)` tuples up to 10 seconds into a rolling `deque`.
+
+### 6.3 Local Visualizer Testing
+
+Run the local GUI tracking visualizer on any video:
+```bash
+python ai/visualization/tracking_viewer.py videos/input/crowd_tracking.mp4
+```
+Press `q` to exit. Displays confirmed IDs, bounding boxes, centroid dots, green trajectory trails, and heading arrows.
+
