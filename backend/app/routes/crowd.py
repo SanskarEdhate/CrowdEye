@@ -23,7 +23,25 @@ def get_crowd_status():
                 .execute()
             )
             if res.data:
-                return {"status": "live", "data": res.data}
+                # Compute aggregates from latest zone telemetry
+                total_ppl = sum(row.get("people_count", 0) for row in res.data)
+                avg_density = round(sum(row.get("density", 0.0) for row in res.data) / max(len(res.data), 1), 2)
+                max_risk = max(row.get("risk_score", 0.0) for row in res.data)
+                risk_level = (
+                    "CRITICAL" if max_risk >= 0.75
+                    else "HIGH" if max_risk >= 0.5
+                    else "MODERATE" if max_risk >= 0.25
+                    else "LOW"
+                )
+                return {
+                    "status": "live",
+                    "total_people": total_ppl,
+                    "current_density": avg_density,
+                    "risk_level": risk_level,
+                    "risk_score": round(max_risk, 2),
+                    "zones": res.data,
+                    "data": res.data
+                }
         except Exception:
             pass
 
