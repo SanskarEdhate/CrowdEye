@@ -120,10 +120,35 @@ class DensityService:
         if not client:
             return False
 
+        # Resolve fallback camera if needed
+        default_cam_id = None
         try:
-            client.table("crowd_density").insert(records).execute()
-            logger.info(f"Persisted {len(records)} crowd_density records to Supabase.")
+            cams = client.table("cameras").select("id").limit(1).execute()
+            if cams.data and len(cams.data) > 0:
+                default_cam_id = cams.data[0]["id"]
+        except Exception:
+            pass
+
+        sanitized_records = []
+        for r in records:
+            cid = r.get("camera_id")
+            if not cid or not str(cid).strip() or len(str(cid).strip()) != 36:
+                cid = default_cam_id
+
+            sanitized_records.append({
+                "camera_id": cid,
+                "zone_name": r["zone_name"],
+                "people_count": r["people_count"],
+                "density_score": r["density_score"],
+                "density_level": r["density_level"],
+                "timestamp": r.get("timestamp", datetime.utcnow().isoformat())
+            })
+
+        try:
+            client.table("crowd_density").insert(sanitized_records).execute()
+            logger.info(f"Persisted {len(sanitized_records)} crowd_density records to Supabase.")
             return True
         except Exception as e:
             logger.warning(f"Error inserting crowd_density records: {e}")
             return False
+
