@@ -54,12 +54,12 @@ def process_video(
 
     duration_sec = int(round(total_frames / fps)) if total_frames > 0 else 0
 
-    # Adaptive stride: ensure inference completes in < 8s regardless of video size
+    # Adaptive stride: ensure dense crowd inference completes in 10-15s
     if frame_stride is None:
-        if total_frames > 500:
-            frame_stride = 5
-        elif total_frames > 200:
-            frame_stride = 3
+        if total_frames > 400:
+            frame_stride = max(6, int(total_frames / 40))
+        elif total_frames > 150:
+            frame_stride = 6
         else:
             frame_stride = 2
 
@@ -70,7 +70,7 @@ def process_video(
 
     # 2. Instantiate YOLO detector with optimized threshold for dense crowds
     if detector is None:
-        detector = YOLODetector.get_shared_instance(conf_threshold=0.28)
+        detector = YOLODetector.get_shared_instance(conf_threshold=0.20)
 
     frame_index = 0
     counts: List[int] = []
