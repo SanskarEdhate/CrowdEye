@@ -180,6 +180,182 @@
 
     </div>
 
+    <!-- =======================================================================
+         PHASE 4: CROWD DENSITY ESTIMATION & ZONE HEATMAP STUDIO
+         ======================================================================= -->
+    <section class="panel" style="margin-top: 1.5rem; border: 1px solid rgba(56, 189, 248, 0.25);">
+      <div class="panel-header" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
+        <div>
+          <h2 class="panel-title" style="display: flex; align-items: center; gap: 0.5rem;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            Phase 4: Crowd Density Estimation & Zone Heatmap Studio
+          </h2>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
+            Spatial partition analysis • Perspective homography • Dynamic Gaussian heat distribution • Optional CSRNet verification
+          </p>
+        </div>
+        <div style="display: flex; gap: 0.75rem; align-items: center;">
+          <span class="badge" id="density-job-badge" style="background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan); border: 1px solid var(--accent-cyan);">READY</span>
+        </div>
+      </div>
+
+      <!-- Controls & Progress -->
+      <div style="display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--border-subtle);">
+        <div style="display: flex; gap: 0.75rem; align-items: center;">
+          <input type="file" id="density-video-input" accept="video/mp4,video/avi,video/mov" class="form-input" style="max-width: 350px; font-size: 0.85rem;">
+          <button id="run-density-btn" class="btn btn-primary" onclick="startDensityJob()" style="display: flex; align-items: center; gap: 0.5rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            Analyze Zone Density
+          </button>
+        </div>
+        <div style="min-width: 260px;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.35rem;">
+            <span>Processing Progress</span>
+            <span id="density-progress-text">0%</span>
+          </div>
+          <div style="height: 8px; background: var(--bg-surface-elevated); border-radius: 9999px; overflow: hidden;">
+            <div id="density-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-emerald)); transition: width 0.3s ease;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Density Studio Workspace: Zones + Heatmap Canvas Split -->
+      <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+        
+        <!-- Left Column: Zone Breakdown Grid -->
+        <div>
+          <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+            <span>Monitored Camera Zones (2×3 Grid)</span>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">Capacity Normalized</span>
+          </h3>
+
+          <div id="zone-cards-container" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;">
+            <!-- Zone A -->
+            <div class="zone-card" id="card-zone-A" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.85rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <strong style="color: var(--accent-cyan);">Zone A</strong>
+                <span class="badge" id="badge-zone-A" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); font-size: 0.7rem;">LOW</span>
+              </div>
+              <div style="font-size: 1.3rem; font-weight: 700;" id="count-zone-A">0 <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">/ 150 cap</span></div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Density: <span id="score-zone-A">0.0%</span></div>
+              <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 0.5rem; overflow: hidden;">
+                <div id="bar-zone-A" style="width: 0%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
+              </div>
+            </div>
+
+            <!-- Zone B -->
+            <div class="zone-card" id="card-zone-B" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.85rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <strong style="color: var(--accent-cyan);">Zone B</strong>
+                <span class="badge" id="badge-zone-B" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); font-size: 0.7rem;">LOW</span>
+              </div>
+              <div style="font-size: 1.3rem; font-weight: 700;" id="count-zone-B">0 <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">/ 200 cap</span></div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Density: <span id="score-zone-B">0.0%</span></div>
+              <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 0.5rem; overflow: hidden;">
+                <div id="bar-zone-B" style="width: 0%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
+              </div>
+            </div>
+
+            <!-- Zone C -->
+            <div class="zone-card" id="card-zone-C" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.85rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <strong style="color: var(--accent-cyan);">Zone C</strong>
+                <span class="badge" id="badge-zone-C" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); font-size: 0.7rem;">LOW</span>
+              </div>
+              <div style="font-size: 1.3rem; font-weight: 700;" id="count-zone-C">0 <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">/ 150 cap</span></div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Density: <span id="score-zone-C">0.0%</span></div>
+              <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 0.5rem; overflow: hidden;">
+                <div id="bar-zone-C" style="width: 0%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
+              </div>
+            </div>
+
+            <!-- Zone D -->
+            <div class="zone-card" id="card-zone-D" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.85rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <strong style="color: var(--accent-cyan);">Zone D</strong>
+                <span class="badge" id="badge-zone-D" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); font-size: 0.7rem;">LOW</span>
+              </div>
+              <div style="font-size: 1.3rem; font-weight: 700;" id="count-zone-D">0 <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">/ 150 cap</span></div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Density: <span id="score-zone-D">0.0%</span></div>
+              <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 0.5rem; overflow: hidden;">
+                <div id="bar-zone-D" style="width: 0%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
+              </div>
+            </div>
+
+            <!-- Zone E -->
+            <div class="zone-card" id="card-zone-E" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.85rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <strong style="color: var(--accent-cyan);">Zone E</strong>
+                <span class="badge" id="badge-zone-E" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); font-size: 0.7rem;">LOW</span>
+              </div>
+              <div style="font-size: 1.3rem; font-weight: 700;" id="count-zone-E">0 <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">/ 200 cap</span></div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Density: <span id="score-zone-E">0.0%</span></div>
+              <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 0.5rem; overflow: hidden;">
+                <div id="bar-zone-E" style="width: 0%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
+              </div>
+            </div>
+
+            <!-- Zone F -->
+            <div class="zone-card" id="card-zone-F" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.85rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <strong style="color: var(--accent-cyan);">Zone F</strong>
+                <span class="badge" id="badge-zone-F" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); font-size: 0.7rem;">LOW</span>
+              </div>
+              <div style="font-size: 1.3rem; font-weight: 700;" id="count-zone-F">0 <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">/ 150 cap</span></div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Density: <span id="score-zone-F">0.0%</span></div>
+              <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 0.5rem; overflow: hidden;">
+                <div id="bar-zone-F" style="width: 0%; height: 100%; background: var(--accent-emerald); transition: width 0.3s;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CSRNet Advisory Verification Status -->
+          <div id="csrnet-status-box" style="margin-top: 1rem; background: var(--bg-surface); border: 1px dashed var(--border-medium); border-radius: 8px; padding: 0.85rem; display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <span style="font-size: 0.75rem; font-weight: 600; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 0.05em;">Optional CSRNet Congestion Verification</span>
+              <p id="csrnet-info-text" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Standby (Runs automatically when density > 70% or YOLO conf drops)</p>
+            </div>
+            <span id="csrnet-badge" class="badge" style="background: rgba(148, 163, 184, 0.15); color: var(--text-muted);">STANDBY</span>
+          </div>
+
+        </div>
+
+        <!-- Right Column: HTML5 Dynamic Density Heatmap Canvas -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-primary);">
+              Dynamic Heatmap Overlay
+            </h3>
+            <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: var(--text-muted);">
+              <span>Low</span>
+              <div style="width: 80px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #38bdf8, #10b981, #f59e0b, #ef4444);"></div>
+              <span>Critical</span>
+            </div>
+          </div>
+
+          <div style="position: relative; width: 100%; aspect-ratio: 4/3; background: #070a10; border-radius: 8px; border: 1px solid var(--border-subtle); overflow: hidden;">
+            <canvas id="zoneHeatmapCanvas" width="640" height="480" style="width: 100%; height: 100%; display: block;"></canvas>
+            
+            <div id="heatmap-placeholder" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 2a10 10 0 0 1 10 10"></path>
+              </svg>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Upload video to generate real-time heatmap</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
     <!-- Active Incident Alerts Table -->
     <section class="panel">
       <div class="panel-header">
@@ -244,5 +420,233 @@
   <script src="../js/supabase.js"></script>
   <script src="../js/api.js"></script>
   <script src="../js/app.js"></script>
+
+  <!-- Phase 4: Density & Dynamic Heatmap Controller -->
+  <script>
+    let densityPollTimer = null;
+    const API_BASE = window.location.port === "8000" ? "" : "http://127.0.0.1:8000";
+
+    async function startDensityJob() {
+      const fileInput = document.getElementById("density-video-input");
+      const runBtn = document.getElementById("run-density-btn");
+      const badge = document.getElementById("density-job-badge");
+      const progressBar = document.getElementById("density-progress-bar");
+      const progressText = document.getElementById("density-progress-text");
+
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert("Please select a crowd video (.mp4) to analyze zone densities.");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        runBtn.disabled = true;
+        runBtn.innerHTML = "Processing Video...";
+        badge.textContent = "QUEUED";
+        badge.style.color = "var(--accent-amber)";
+        badge.style.borderColor = "var(--accent-amber)";
+        progressBar.style.width = "5%";
+        progressText.textContent = "5%";
+
+        const res = await fetch(`${API_BASE}/density/start`, {
+          method: "POST",
+          body: formData
+        });
+
+        if (!res.ok) {
+          throw new Error(`Upload failed: ${res.statusText}`);
+        }
+
+        const data = await res.json();
+        const jobId = data.job_id;
+        badge.textContent = "PROCESSING";
+
+        // Poll job status
+        densityPollTimer = setInterval(async () => {
+          try {
+            const statusRes = await fetch(`${API_BASE}/density/status/${jobId}`);
+            if (statusRes.ok) {
+              const statusData = await statusRes.json();
+              const pct = statusData.progress || 0;
+              progressBar.style.width = `${pct}%`;
+              progressText.textContent = `${pct}%`;
+
+              if (statusData.status === "completed") {
+                clearInterval(densityPollTimer);
+                badge.textContent = "COMPLETED";
+                badge.style.color = "var(--accent-emerald)";
+                badge.style.borderColor = "var(--accent-emerald)";
+                runBtn.disabled = false;
+                runBtn.innerHTML = "Analyze Zone Density";
+
+                // Fetch final result
+                const resultRes = await fetch(`${API_BASE}/density/result/${jobId}`);
+                if (resultRes.ok) {
+                  const resultData = await resultRes.json();
+                  renderDensityResults(resultData);
+                }
+              } else if (statusData.status === "failed") {
+                clearInterval(densityPollTimer);
+                badge.textContent = "FAILED";
+                badge.style.color = "var(--accent-rose)";
+                badge.style.borderColor = "var(--accent-rose)";
+                runBtn.disabled = false;
+                runBtn.innerHTML = "Analyze Zone Density";
+                alert("Density analysis job failed during processing.");
+              }
+            }
+          } catch (err) {
+            console.error("Error polling density status:", err);
+          }
+        }, 1200);
+
+      } catch (err) {
+        console.error("Error starting density job:", err);
+        alert(`Error starting density estimation: ${err.message}`);
+        runBtn.disabled = false;
+        runBtn.innerHTML = "Analyze Zone Density";
+        badge.textContent = "ERROR";
+      }
+    }
+
+    function renderDensityResults(result) {
+      if (!result || !result.zones) return;
+
+      const levelColors = {
+        "LOW": { bg: "rgba(16, 185, 129, 0.15)", text: "#10b981", bar: "#10b981" },
+        "MEDIUM": { bg: "rgba(245, 158, 11, 0.15)", text: "#f59e0b", bar: "#f59e0b" },
+        "HIGH": { bg: "rgba(249, 115, 22, 0.15)", text: "#f97316", bar: "#f97316" },
+        "CRITICAL": { bg: "rgba(239, 68, 68, 0.2)", text: "#ef4444", bar: "#ef4444" }
+      };
+
+      result.zones.forEach(z => {
+        const zoneKey = z.zone;
+        const countElem = document.getElementById(`count-zone-${zoneKey}`);
+        const scoreElem = document.getElementById(`score-zone-${zoneKey}`);
+        const badgeElem = document.getElementById(`badge-zone-${zoneKey}`);
+        const barElem = document.getElementById(`bar-zone-${zoneKey}`);
+
+        if (countElem) countElem.innerHTML = `${z.people} <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">/ ${z.capacity} cap</span>`;
+        if (scoreElem) scoreElem.textContent = `${Math.round(z.score * 100)}%`;
+
+        const colors = levelColors[z.density] || levelColors["LOW"];
+        if (badgeElem) {
+          badgeElem.textContent = z.density;
+          badgeElem.style.background = colors.bg;
+          badgeElem.style.color = colors.text;
+        }
+        if (barElem) {
+          barElem.style.width = `${Math.min(100, Math.round(z.score * 100))}%`;
+          barElem.style.background = colors.bar;
+        }
+      });
+
+      // CSRNet Advisory Box
+      const csrnetBadge = document.getElementById("csrnet-badge");
+      const csrnetText = document.getElementById("csrnet-info-text");
+      if (result.csrnet && result.csrnet.status !== "no_frame") {
+        if (csrnetBadge) {
+          csrnetBadge.textContent = "VERIFIED";
+          csrnetBadge.style.background = "rgba(56, 189, 248, 0.2)";
+          csrnetBadge.style.color = "var(--accent-cyan)";
+        }
+        if (csrnetText) {
+          csrnetText.textContent = `High density verification: Estimated ~${result.csrnet.estimated_count} people (${result.csrnet.confidence}).`;
+        }
+      } else {
+        if (csrnetBadge) {
+          csrnetBadge.textContent = "STANDBY";
+          csrnetBadge.style.background = "rgba(148, 163, 184, 0.15)";
+          csrnetBadge.style.color = "var(--text-muted)";
+        }
+        if (csrnetText) {
+          csrnetText.textContent = "Standby (YOLO count optimal; zone density within normal bounds)";
+        }
+      }
+
+      // Render Dynamic Heatmap Canvas
+      renderHeatmapCanvas(result.heatmap || []);
+    }
+
+    function renderHeatmapCanvas(points) {
+      const canvas = document.getElementById("zoneHeatmapCanvas");
+      const placeholder = document.getElementById("heatmap-placeholder");
+      if (!canvas) return;
+      if (placeholder) placeholder.style.display = "none";
+
+      const ctx = canvas.getContext("2d");
+      const width = canvas.width;
+      const height = canvas.height;
+
+      // Clear with dark venue background
+      ctx.fillStyle = "#070a10";
+      ctx.fillRect(0, 0, width, height);
+
+      // Draw 2x3 Venue Zone Grid Lines
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+
+      // Vertical grid lines
+      ctx.beginPath();
+      ctx.moveTo(width / 3, 0);
+      ctx.lineTo(width / 3, height);
+      ctx.moveTo((2 * width) / 3, 0);
+      ctx.lineTo((2 * width) / 3, height);
+      // Horizontal grid line
+      ctx.moveTo(0, height / 2);
+      ctx.lineTo(width, height / 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw Zone Labels in watermark
+      ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
+      ctx.font = "bold 20px Outfit, sans-serif";
+      ctx.fillText("ZONE A", 20, 35);
+      ctx.fillText("ZONE B", width / 3 + 20, 35);
+      ctx.fillText("ZONE C", (2 * width) / 3 + 20, 35);
+      ctx.fillText("ZONE D", 20, height / 2 + 35);
+      ctx.fillText("ZONE E", width / 3 + 20, height / 2 + 35);
+      ctx.fillText("ZONE F", (2 * width) / 3 + 20, height / 2 + 35);
+
+      // Render Gaussian Heat Clouds
+      points.forEach(pt => {
+        const radius = 35;
+        const grad = ctx.createRadialGradient(pt.x, pt.y, 0, pt.x, pt.y, radius);
+
+        const int = pt.intensity;
+        if (int >= 0.8) {
+          grad.addColorStop(0, `rgba(239, 68, 68, ${int * 0.7})`);
+          grad.addColorStop(0.5, `rgba(249, 115, 22, ${int * 0.4})`);
+        } else if (int >= 0.5) {
+          grad.addColorStop(0, `rgba(245, 158, 11, ${int * 0.65})`);
+          grad.addColorStop(0.5, `rgba(16, 185, 129, ${int * 0.35})`);
+        } else {
+          grad.addColorStop(0, `rgba(56, 189, 248, ${int * 0.6})`);
+          grad.addColorStop(0.5, `rgba(59, 130, 246, ${int * 0.3})`);
+        }
+        grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    // Initialize default grid view on canvas
+    window.addEventListener("load", () => {
+      const canvas = document.getElementById("zoneHeatmapCanvas");
+      if (canvas) {
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#070a10";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+    });
+  </script>
 </body>
 </html>
+

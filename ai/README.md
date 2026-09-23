@@ -177,3 +177,62 @@ python ai/visualization/tracking_viewer.py videos/input/crowd_tracking.mp4
 ```
 Press `q` to exit. Displays confirmed IDs, bounding boxes, centroid dots, green trajectory trails, and heading arrows.
 
+---
+
+## 7. Phase 4: Crowd Density Estimation + Zone Heatmap System
+
+Phase 4 elevates crowd monitoring from *"How many people are present?"* to *"Where is the crowd concentrated and how crowded is each zone?"*
+
+### 7.1 Architecture Overview
+
+```
+ai/
+├── density/
+│   ├── __init__.py           # Exports ZoneManager, Perspective, Estimator, Heatmap, CSRNet
+│   ├── zone_manager.py       # Spatial partition grid (Zones A-F) & point-in-polygon mapping
+│   ├── perspective.py        # OpenCV homography perspective distortion rectification
+│   ├── density_estimator.py  # 4-tier normalized density score calculation
+│   ├── heatmap_generator.py  # Dynamic 2D Gaussian density cloud data generation
+│   └── csrnet_optional.py    # Conditional dilated CSRNet verification model
+```
+
+### 7.2 Density Calculation & Zone Capacity
+- **Zone Partitioning**: The camera view is partitioned into a nominal 2×3 grid:
+  - Zones A, B, C (top/distant tier)
+  - Zones D, E, F (bottom/foreground tier)
+- **Formula**:
+  $$\text{Density Score} = \frac{\text{people\_count}}{\text{zone\_capacity}}$$
+- **4-Tier Classification**:
+  - `LOW`: $0\% \le \text{score} < 40\%$
+  - `MEDIUM`: $40\% \le \text{score} < 70\%$
+  - `HIGH`: $70\% \le \text{score} < 90\%$
+  - `CRITICAL`: $\text{score} \ge 90\%$
+
+### 7.3 Camera Perspective Calibration Note
+- **Projective Homography**: Camera tilt introduces non-linear ground plane foreshortening where distant people appear smaller and packed tighter in image pixels.
+- `ai/density/perspective.py` applies OpenCV 2D homography ($3 \times 3$ transformation matrix):
+  $$\begin{bmatrix} x' \\ y' \\ 1 \end{bmatrix} \sim \mathbf{H} \begin{bmatrix} u \\ v \\ 1 \end{bmatrix}$$
+- **Important**: Accurate physical density (people / $\text{m}^2$) requires physical camera calibration (focal length, elevation angle, ground markers). A calibrated default trapezoid rectification is applied out of the box.
+
+### 7.4 Dynamic Heatmap Generation
+- **Strategy**: **Never save raw image files continuously to disk or database.**
+- `HeatmapGenerator` applies 2D Gaussian kernels to person centroids:
+  $$G(x, y) = \exp\left(-\frac{(x - x_0)^2 + (y - y_0)^2}{2\sigma^2}\right)$$
+- Downsamples matrix to an array of coordinate-intensity points:
+  ```json
+  [
+    { "x": 250, "y": 400, "intensity": 0.82 }
+  ]
+  ```
+- Rendered client-side on HTML5 Canvas via radial gradients.
+
+### 7.5 Optional CSRNet Verification Module & Limitations
+- **Architecture**: VGG-16 frontend (10 layers) + Dilated Conv backend (dilation rate 2) preserving spatial resolution without pooling artifacts.
+- **Strict Invocation Guard**:
+  - Only triggered when average YOLO confidence drops ($< 0.50$) OR any zone density score exceeds $0.70$.
+  - **NEVER** runs on every frame.
+  - **NEVER** directly replaces or blindly averages with YOLO count.
+  - Outputs advisory confirmation: `{"estimated_count": int, "confidence": "experimental"}`.
+- **Pretrained Checkpoint Reference**: Trained on ShanghaiTech Part A (dense) and Part B (moderate) crowd counting benchmarks (`ai/models/csrnet_shanghaitech.pth`).
+
+

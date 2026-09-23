@@ -91,6 +91,61 @@ This document specifies the technical blueprint for the **CrowdEye AI** platform
 [ Frontend HTML5 Canvas (Visualizer) ] [ Supabase: tracking_jobs ('completed') ]
 ```
 
+---
+
+## 1.2 Phase 4: Crowd Density & Zone Heatmap Pipeline Flow
+
+```
+[ CCTV Video / Recording (.mp4) ]
+            |
+            v
+[ FastAPI: POST /density/start ]
+            |
+            v
+[ DensityService: Insert density_jobs (status: 'queued') ]
+            |
+            v
+[ FastAPI BackgroundTasks: DensityWorker ]
+            |
+            v
+[ YOLOv8 Person Detection (COCO Class 0) ]
+            |
+            v
+[ DeepSORT Multi-Object Tracking (MobileNet Embedder) ]
+            |
+            v
+[ Person Centroid Extraction: (cx, cy) ]
+            |
+            v
+[ Camera Perspective Correction (OpenCV Homography Matrix) ]
+            |
+            v
+[ ZoneManager: Point-in-Polygon Spatial Mapping (Zones A - F) ]
+            |
+            v
+[ DensityEstimator: normalized score = people_count / zone_capacity ]
+            |
+            v
+[ 4-Tier Classification: LOW (0-40%), MEDIUM (40-70%), HIGH (70-90%), CRITICAL (90%+) ]
+            |
+      +-----+-------------------------------+
+      |                                     |
+      | (If Density > 0.70 or Low Conf)    | (Every Frame)
+      v                                     v
+[ Optional CSRNet Verification ]     [ Dynamic HeatmapGenerator (Gaussian Matrix) ]
+      |                                     |
+      +-----------------+-------------------+
+                        |
+                        +-------------------------------+
+                        |                               |
+                        v (5-Second Batches)            v (Result Poll)
+          [ Supabase: crowd_density ]      [ GET /density/result/{job_id} ]
+                        |                               |
+                        v                               v
+          [ Supabase: density_jobs ]        [ Frontend Dashboard: Zone Cards & Canvas Heatmap ]
+```
+
+
 ```
 [ CCTV Video / Recording ]
             |
