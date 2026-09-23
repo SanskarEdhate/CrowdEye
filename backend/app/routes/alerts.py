@@ -51,9 +51,9 @@ def resolve_alert(
     if alert_id.lower() in ("active", "latest", "demo", "all"):
         actives = AlertService.get_alerts(status="ACTIVE")
         if actives:
-            target_id = str(actives[0].get("id"))
-            resolved = AlertService.resolve_alert(target_id, resolved_by=resolved_by)
-            return resolved or {"status": "RESOLVED", "id": target_id}
+            for a in actives:
+                AlertService.resolve_alert(str(a.get("id")), resolved_by=resolved_by)
+            return {"status": "RESOLVED", "message": f"Successfully resolved {len(actives)} active hazard alert(s)."}
         return {"status": "RESOLVED", "message": "No active alerts to resolve."}
 
     resolved = AlertService.resolve_alert(alert_id, resolved_by=resolved_by)

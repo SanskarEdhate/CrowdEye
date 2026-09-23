@@ -56,6 +56,8 @@ def set_demo_scenario(
     target_cam_id = payload.camera_id or (cams[0]["id"] if cams else "cam-01")
 
     if scen == "low":
+        for a in AlertService.get_alerts(status="ACTIVE"):
+            AlertService.resolve_alert(str(a.get("id")), resolved_by="demo_safe_flow")
         CameraService.update_camera_telemetry(target_cam_id, people_count=90, density=0.8, risk_level="LOW")
         realtime_manager.sync_broadcast_risk(target_cam_id, {
             "type": "risk_update",

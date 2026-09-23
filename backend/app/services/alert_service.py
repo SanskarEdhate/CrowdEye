@@ -336,57 +336,26 @@ class AlertService:
                 continue
             results.append(a)
 
-        # If cache is currently empty, seed standard baseline alerts for control room display
-        if not results:
-            cls._seed_default_alerts()
-            for a in _alerts_cache.values():
-                if status and a.get("status") != status.upper():
-                    continue
-                results.append(a)
-
         # Sort descending by created_at
         results.sort(key=lambda x: str(x.get("created_at", "")), reverse=True)
         return results[:limit]
 
     @classmethod
     def _seed_default_alerts(cls):
-        """Seed initial alerts so control room dashboard is immediately demonstrative."""
+        """Seed historical resolved alerts only. Never inject fake active alarms."""
+        now_iso = datetime.utcnow().isoformat()
         sample_alerts = [
             {
                 "id": "alt-001",
                 "camera_id": None,
                 "camera_name": "Gate North Cam 1",
                 "zone_name": "Zone A (Turnstiles)",
-                "risk_score": 88.5,
-                "alert_level": "CRITICAL",
-                "message": "High crowd risk detected: Critical bottleneck near North Turnstiles",
-                "status": "ACTIVE",
-                "created_at": datetime.utcnow().isoformat(),
-                "resolved_at": None
-            },
-            {
-                "id": "alt-002",
-                "camera_id": None,
-                "camera_name": "Stage Cam 3",
-                "zone_name": "Zone C (Front Stage)",
-                "risk_score": 72.0,
-                "alert_level": "WARNING",
-                "message": "Elevated crowd risk warning: Rapid density influx detected",
-                "status": "ACTIVE",
-                "created_at": datetime.utcnow().isoformat(),
-                "resolved_at": None
-            },
-            {
-                "id": "alt-003",
-                "camera_id": None,
-                "camera_name": "Concourse East Cam",
-                "zone_name": "Zone B (Food Court)",
-                "risk_score": 64.0,
-                "alert_level": "WARNING",
-                "message": "Warning: Food Court corridor movement stagnation",
+                "risk_score": 25.0,
+                "alert_level": "LOW",
+                "message": "Routine gate baseline: Flow laminar and compliant",
                 "status": "RESOLVED",
-                "created_at": "2026-09-23T11:30:00Z",
-                "resolved_at": "2026-09-23T11:45:12Z"
+                "created_at": now_iso,
+                "resolved_at": now_iso
             }
         ]
         for a in sample_alerts:
