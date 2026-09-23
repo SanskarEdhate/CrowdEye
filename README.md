@@ -1,191 +1,142 @@
-# CrowdEye AI
+# CrowdEye AI - Real-time Crowd Safety & Security Operations Platform
 
-> **AI-Powered Crowd Monitoring & Safety Platform for Large Public Events**
+> **Intelligent Multi-Camera Telemetry, Explainable AI Risk Prediction & Control Room Management for Large Public Events**
 
-CrowdEye AI is an intelligent surveillance and incident prevention platform designed to protect lives at large-scale gatherings such as music festivals, religious pilgrimages, sports stadiums, and transport terminals. By transforming standard CCTV video feeds into real-time crowd density telemetry, movement vectors, and proactive stampede hazard warnings, CrowdEye AI equips security command centers with decisive operational foresight.
-
----
-
-## Features Planned
-
-- **Person Detection**: Real-time bounding-box identification of individuals in dense public crowds using YOLOv8.
-- **Crowd Counting**: Accurate headcount estimation across camera perspectives and occluded zones.
-- **Movement Tracking**: Continuous pedestrian trajectory vectorization with DeepSORT to detect flow anomalies and counter-flow turbulence.
-- **Density Analysis**: High-density crowd mapping utilizing CSRNet (Congested Scene Recognition Network) to calculate people per square meter ($\text{ppl/m}^2$).
-- **Risk Prediction**: Machine learning risk engine predicting stampede risks, dangerous bottlenecks, and surge pressures before escalation.
-- **Real-Time Alerts**: Instant multi-channel notifications to security personnel when safe density thresholds are breached.
-- **Security Command Dashboard**: Interactive geospatial map (Leaflet.js), dynamic telemetry charts (Chart.js), and incident dispatch workflows.
+CrowdEye AI is an enterprise-grade crowd safety platform engineered for stadiums, music festivals, transit hubs, and massive public gatherings. It analyzes camera feeds in real time, computes pedestrian density and movement vectors, predicts stampede hazards before escalation, and provides an operator control room dashboard for rapid incident response.
 
 ---
 
-## Tech Stack
-
-### Backend
-- **Python 3.11+**
-- **FastAPI**: Asynchronous high-performance REST framework
-- **Uvicorn**: Lightning-fast ASGI production web server
-- **Pydantic & Python-Dotenv**: Type-safe settings and environment variable validation
-
-### Database & Security
-- **Supabase PostgreSQL**: Relational time-series and event registry database
-- **Supabase Row Level Security (RLS)**: Cryptographic isolation preventing unauthorized write access to telemetry and alerts
-- **Supabase Authentication**: Role-based access control for security operators and commanders
-- **Supabase Realtime**: WebSocket event streaming for instant alert distribution
-
-### Frontend
-- **HTML5 & Vanilla CSS3**: High-performance, responsive command-center design system
-- **Vanilla ES6 JavaScript**: Buildless, lightweight client runtime
-- **Fetch API**: Standardized backend API communication
-- **Chart.js**: Real-time density timelines and risk distribution analytics
-- **Leaflet.js**: Geospatial venue maps with zone-level telemetry and status overlays
-
-### Future AI Modules (Phase 2 Roadmap)
-- **YOLOv8**: Edge person detection
-- **DeepSORT**: Multi-object tracking and trajectory analysis
-- **CSRNet**: Dilated convolutional crowd density estimation
-- **Predictive Risk Model**: Bottleneck and surge forecasting
-
----
-
-## Project Structure
+## System Architecture
 
 ```
-CrowdEye-AI/
-├── backend/
-│   ├── app/
-│   │   ├── config/settings.py       # Configuration & environment variables
-│   │   ├── database/supabase.py     # Reusable Supabase client & health checks
-│   │   ├── routes/                  # API routers (health, crowd, alerts, events)
-│   │   ├── services/                # Business logic services
-│   │   ├── models/                  # Database models
-│   │   ├── schemas/                 # Pydantic validation schemas
-│   │   ├── utils/                   # Helper utilities
-│   │   └── main.py                  # FastAPI instance & CORS middleware
-│   ├── requirements.txt             # Python dependencies
-│   ├── .env.example                 # Environment variable template
-│   └── .env                         # Local environment configuration
-├── frontend/
-│   ├── index.html                   # Platform landing portal
-│   ├── pages/
-│   │   ├── login.html               # Operator authentication
-│   │   ├── dashboard.html           # Live command center dashboard
-│   │   ├── monitoring.html          # Camera feed matrix
-│   │   └── analytics.html           # Historical crowd telemetry & logs
-│   ├── css/style.css                # Command center dark design system
-│   ├── js/
-│   │   ├── app.js                   # Dashboard Chart.js & Leaflet map controller
-│   │   ├── api.js                   # Fetch API communication client
-│   │   └── supabase.js              # Supabase JS auth & client helpers
-│   ├── config.example.js            # Frontend public anon key template
-│   └── assets/                      # Static assets & icons
-├── database/
-│   ├── migrations/
-│   │   └── 001_initial_schema.sql   # Postgres schema, indexes & RLS policies
-│   └── README.md                    # Database & RLS documentation
-├── ai/
-│   └── README.md                    # Future AI architecture roadmap (Phase 2)
-├── datasets/                        # AI training datasets (gitignored)
-├── videos/                          # Video feed samples (gitignored)
-├── docs/
-│   └── system_architecture.md       # Full end-to-end architectural blueprint
-├── README.md
-└── .gitignore
+Camera (CCTV / RTSP Stream)
+       ↓
+   AI Engine (YOLOv8 Detection + DeepSORT Tracking + Homography Density)
+       ↓
+  Risk Engine (10-Second Temporal Rolling Window: Density, Speed, Chaos, Growth)
+       ↓
+ Alert Manager (Threshold Safety Rules + Duplicate Protection Constraint)
+       ↓
+Operator Dashboard (Realtime WebSocket Subscriptions + Camera Grid + Alert Resolution)
 ```
 
 ---
 
-## Quickstart & Installation Steps
+## Role-Based Access Control (RBAC)
 
-### 1. Prerequisites
-- Python 3.10 or higher
-- Git
+CrowdEye AI implements strict role-based authorization backed by Supabase Auth and database Row Level Security (RLS):
 
-### 2. Backend Setup
-
-1. Open a terminal and navigate to the `backend/` directory:
-   ```bash
-   cd backend
-   ```
-
-2. (Recommended) Create and activate a Python virtual environment:
-   ```bash
-   # Windows
-   python -m venv venv
-   .\venv\Scripts\activate
-
-   # Linux / macOS
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-
-3. Install required Python packages:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. Configure environment variables:
-   - Copy `.env.example` to `.env`:
-     ```bash
-     cp .env.example .env
-     ```
-   - Edit `.env` to include your Supabase project credentials:
-     ```env
-     SUPABASE_URL=https://your-project.supabase.co
-     SUPABASE_SERVICE_KEY=your-service-role-key-here
-     ```
-
-5. Launch the FastAPI development server:
-   ```bash
-   uvicorn app.main:app --reload --port 8000
-   ```
-
-6. Verify backend health in your browser or curl:
-   ```bash
-   curl http://127.0.0.1:8000/
-   ```
-   Expected response:
-   ```json
-   {
-     "project": "CrowdEye AI",
-     "status": "Backend running"
-   }
-   ```
-   Interactive Swagger API documentation is available at: `http://127.0.0.1:8000/docs`
+| Role | Dashboard Permissions | Restricted Actions |
+| :--- | :--- | :--- |
+| **ADMIN** | • View security dashboard & telemetry<br>• Register new CCTV cameras (`POST /cameras`)<br>• Update camera configuration & status (`PUT /cameras/{id}`)<br>• Manage and resolve all alerts | None |
+| **OPERATOR** | • View security control room dashboard<br>• Monitor camera feeds & live density<br>• View active alerts and historical audit logs<br>• Resolve active incident alerts (`PUT /alerts/{id}/resolve`) | • Registering new cameras (HTTP 403 Forbidden)<br>• Modifying camera properties or status (HTTP 403 Forbidden) |
 
 ---
 
-### 3. Database Setup (Supabase)
+## Alert Workflow & Safety Rules
 
-1. Create a new project in [Supabase](https://supabase.com).
-2. Open the **SQL Editor** in your Supabase project dashboard.
-3. Open the file `database/migrations/001_initial_schema.sql` and run its contents in the SQL editor.
-4. This script automatically:
-   - Generates all five core tables (`users`, `events`, `cameras`, `crowd_logs`, `alerts`).
-   - Enables Row Level Security (RLS).
-   - Establishes policies ensuring only the backend service role can insert AI telemetry and safety alerts.
+Alerts are generated directly from the Explainable Risk Engine evaluations:
 
----
+```
+Risk Score (0 - 100)
+    ├── Score <= 30  (LOW)      : Normal crowd flow (No alert)
+    ├── Score 31-60  (MEDIUM)   : Monitoring only (No alert created)
+    ├── Score 61-80  (HIGH)     : WARNING alert created
+    └── Score 81-100 (CRITICAL) : CRITICAL alert created
+```
 
-### 4. Frontend Setup
+### Duplicate Protection
+A database constraint and partial unique index enforce that only **one active alert** can exist per camera and zone simultaneously:
+```sql
+CREATE UNIQUE INDEX idx_active_alert_unique
+ON public.alerts (camera_id, COALESCE(zone_id, '00000000-0000-0000-0000-000000000000'::uuid))
+WHERE status = 'ACTIVE';
+```
+If subsequent risk evaluations occur while an alert is active, duplicate inserts are suppressed and the existing alert's score is updated.
 
-The frontend is built using standard Vanilla HTML5, CSS3, and ES6 JavaScript. No build step (Node.js/npm) is required!
-
-1. Configure Supabase frontend keys:
-   - Copy `frontend/config.example.js` to `frontend/config.js`:
-     ```bash
-     cp frontend/config.example.js frontend/config.js
-     ```
-   - Set your public `url` and `anonKey`.
-2. Open `frontend/index.html` or `frontend/pages/dashboard.html` directly in any modern web browser, or serve it using Python's built-in HTTP server:
-   ```bash
-   # From the project root
-   python -m http.server 3000 --directory frontend
-   ```
-3. Open `http://localhost:3000` in your browser.
+### Alert Status Lifecycle:
+- `ACTIVE`: Incident requires operator attention. Displayed on Dashboard & Alert Panel.
+- `ACKNOWLEDGED`: Operator has marked the alarm for dispatch.
+- `RESOLVED`: Incident mitigated. Operator clicks "Resolve", setting `status='RESOLVED'` and stamping `resolved_at`. Broadcasts `alert_resolved` over WebSocket.
 
 ---
 
-## Phase 1 Status
+## API Reference
 
-✅ **Phase 1 Complete**: Full project architecture, FastAPI backend with CORS, Supabase database migration with RLS security policies, and an interactive dark command-center dashboard (Chart.js + Leaflet.js).
-⏳ **Phase 2 (Upcoming)**: YOLOv8 person detection, DeepSORT trajectory tracking, CSRNet density estimation, and real-time inference worker pipeline.
+### 1. Dashboard Overview
+- `GET /dashboard/overview`
+  - Accessible to: `ADMIN`, `OPERATOR`
+  - Returns:
+    ```json
+    {
+      "total_cameras": 10,
+      "active_alerts": 3,
+      "high_risk_zones": 2,
+      "detected_people": 2500
+    }
+    ```
+
+### 2. Camera Management
+- `POST /cameras`: Register new CCTV camera (**ADMIN only**, returns 403 for `OPERATOR`)
+- `GET /cameras`: Retrieve all cameras with status and live metrics (`ADMIN` + `OPERATOR`)
+- `PUT /cameras/{id}`: Update camera location, status (`ACTIVE`, `MAINTENANCE`, `OFFLINE`), or zone config (**ADMIN only**)
+
+### 3. Alert Management
+- `GET /alerts`: Retrieve active alerts and history with status filter (`ADMIN` + `OPERATOR`)
+- `PUT /alerts/{id}/resolve`: Resolve an active incident alert (`ADMIN` + `OPERATOR`)
+- `POST /alerts/evaluate`: Evaluate risk input against safety rules
+
+### 4. Aggregated Analytics (1-Minute Temporal Buckets)
+- `GET /analytics/timeline?window_minutes=30`: Aggregates 5-second raw crowd telemetry into 1-minute averages for headcount and risk timelines.
+- `GET /analytics/zones`: Compares multi-zone metrics across headcount, density, and risk scores.
+
+### 5. Realtime WebSocket Subscriptions
+- `ws://localhost:8000/ws/realtime`
+  - Subscriptions: Send `{"action": "subscribe", "topic": "alerts"}` or `{"action": "subscribe", "topic": "camera:{id}"}`
+  - Events Broadcast:
+    - `alert_created`: High/Critical risk event triggered
+    - `alert_resolved`: Operator resolved incident
+    - `camera_status`: Camera status changed or created
+    - `risk_update`: Live risk telemetry update
+
+---
+
+## Database Migrations
+
+All schema definitions are located in `database/migrations/`:
+- `001_initial_schema.sql`: Core schema (users, events, cameras, crowd_logs, alerts)
+- `002_tracking_schema.sql`: Person tracking trajectories
+- `003_tracking_jobs.sql`: DeepSORT asynchronous job management
+- `004_density_schema.sql`: Zone density and spatial homography
+- `005_risk_schema.sql`: Temporal risk evaluation and explainability logs
+- `006_alerts.sql`: Alerts table with status lifecycle, duplicate active protection, profiles table, and RLS policies
+- `007_camera_update.sql`: Modifies existing cameras table with `location`, `status DEFAULT 'ACTIVE'`, and `zone_config JSONB`
+
+---
+
+## Frontend Web Applications
+
+Located in `frontend/pages/`:
+- **`dashboard.html`**: Security Control Room Operations Dashboard featuring:
+  - 4 Overview Metric Cards (Active Cameras, Detected People, Active Alerts, High Risk Zones)
+  - Real-time Camera Grid Cards with status, people count, density, and risk badges
+  - Active Alert Panel with instant "Resolve Incident" action
+  - Role switcher (ADMIN vs OPERATOR)
+- **`cameras.html`**: Camera Management Portal (Add camera, view live feed grid, toggle operating status)
+- **`alerts.html`**: Incident Alarms & Historical Audit Table (filter by status, view timestamps, and resolve)
+- **`analytics.html`**: Interactive Chart.js Timelines (People Count Timeline, Risk Score Timeline, and Zone Comparison backed by 1-minute aggregation)
+
+---
+
+## Verification & Testing
+
+Run the automated test suite covering all 5 Phase 6 scenarios:
+```bash
+python scratch/test_phase6_pipeline.py
+```
+Test suite validates:
+1. Risk score 90 -> Critical alert created
+2. Duplicate alert generation -> Only one active alert (duplicate suppressed)
+3. Operator login -> Can resolve alerts
+4. Operator camera creation -> Permission denied (HTTP 403 Forbidden)
+5. Multiple cameras -> Camera grid updates & overview metrics

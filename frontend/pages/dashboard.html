@@ -30,14 +30,20 @@
     
     <div class="nav-links">
       <a href="dashboard.html" class="nav-link active">Dashboard</a>
-      <a href="monitoring.html" class="nav-link">Monitoring</a>
+      <a href="cameras.html" class="nav-link">Cameras</a>
+      <a href="alerts.html" class="nav-link">Alerts</a>
       <a href="analytics.html" class="nav-link">Analytics</a>
-      <a href="login.html" class="nav-link">Logout</a>
+      <a href="monitoring.html" class="nav-link">Monitoring</a>
     </div>
 
-    <div class="nav-status">
-      <span class="pulse-dot"></span>
-      <span id="system-status-indicator">STANDBY MODE (PHASE 1)</span>
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <div id="role-toggle-btn" class="role-indicator" onclick="toggleRole()" title="Click to toggle between ADMIN and OPERATOR mode" style="cursor: pointer; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; background: rgba(56, 189, 248, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan);">
+        <span>Role:</span> <strong id="current-role-label">OPERATOR</strong>
+      </div>
+      <div class="nav-status">
+        <span class="pulse-dot"></span>
+        <span id="system-status-indicator">WEBSOCKET LIVE</span>
+      </div>
     </div>
   </nav>
 
@@ -47,32 +53,45 @@
     <!-- Page Header -->
     <header class="page-header">
       <div class="header-title">
-        <h1>Command & Safety Dashboard</h1>
-        <p>Real-time crowd telemetry, density analysis, and rapid alert mitigation</p>
+        <h1>Security Control Room Operations Platform</h1>
+        <p>TASK 10: Real-time Camera Monitoring • Alert Mitigation & Resolution • Spatial Crowd Risk Control</p>
       </div>
       <div class="header-actions">
-        <select id="event-selector" class="form-input" style="width: auto; padding: 0.5rem 1rem;">
-          <option value="evt-001">Metro Grand Arena 2026</option>
-          <option value="evt-002">Convention Hall Expo</option>
-        </select>
-        <button id="refresh-btn" class="btn btn-secondary" onclick="loadDashboardData()">
+        <button id="refresh-btn" class="btn btn-secondary" onclick="refreshSecurityData()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="23 4 23 10 17 10"></polyline>
             <polyline points="1 20 1 14 7 14"></polyline>
             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
           </svg>
-          Sync Telemetry
+          Sync Control Room
         </button>
       </div>
     </header>
 
-    <!-- Key Metrics Cards Grid -->
+    <!-- SECTION 1: OVERVIEW CARDS (TASK 10) -->
     <section class="metrics-grid">
-      <!-- Card 1: Total People -->
+      <!-- Card 1: Active Cameras -->
       <div class="metric-card">
         <div class="card-header-flex">
-          <span class="card-title">Total People</span>
+          <span class="card-title">Active Cameras</span>
           <div class="card-icon" style="color: var(--accent-cyan);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 7l-7 5 7 5V7z"></path>
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+            </svg>
+          </div>
+        </div>
+        <div class="card-value" id="val-total-cameras">4</div>
+        <div class="card-subtext">
+          <span>Active CCTV Feeds</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Detected People -->
+      <div class="metric-card">
+        <div class="card-header-flex">
+          <span class="card-title">Detected People</span>
+          <div class="card-icon" style="color: var(--accent-blue);">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
               <circle cx="9" cy="7" r="4"></circle>
@@ -81,51 +100,13 @@
             </svg>
           </div>
         </div>
-        <div class="card-value" id="val-total-people">1,420</div>
+        <div class="card-value" id="val-detected-people">2,500</div>
         <div class="card-subtext">
-          <span>Active Venue Estimation</span>
+          <span>Total Monitored Headcount</span>
         </div>
       </div>
 
-      <!-- Card 2: Current Density -->
-      <div class="metric-card warning">
-        <div class="card-header-flex">
-          <span class="card-title">Current Density</span>
-          <div class="card-icon" style="color: var(--accent-amber);">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="3" y1="9" x2="21" y2="9"></line>
-              <line x1="9" y1="21" x2="9" y2="9"></line>
-            </svg>
-          </div>
-        </div>
-        <div class="card-value" id="val-current-density">2.4 <span style="font-size: 1rem; color: var(--text-secondary);">ppl/m²</span></div>
-        <div class="card-subtext">
-          <span>Average across monitored zones</span>
-        </div>
-      </div>
-
-      <!-- Card 3: Risk Level -->
-      <div class="metric-card warning">
-        <div class="card-header-flex">
-          <span class="card-title">Risk Level</span>
-          <div class="card-icon" style="color: var(--accent-amber);">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-              <line x1="12" y1="9" x2="12" y2="13"></line>
-              <line x1="12" y1="17" x2="12.01" y2="17"></line>
-            </svg>
-          </div>
-        </div>
-        <div class="card-value" id="val-risk-level">
-          <span class="badge badge-warning" style="font-size: 1.1rem; padding: 0.35rem 0.8rem;">MODERATE</span>
-        </div>
-        <div class="card-subtext">
-          <span>Score: <strong id="val-risk-score" style="color: #fbbf24;">0.42 / 1.0</strong></span>
-        </div>
-      </div>
-
-      <!-- Card 4: Active Alerts -->
+      <!-- Card 3: Active Alerts -->
       <div class="metric-card critical">
         <div class="card-header-flex">
           <span class="card-title">Active Alerts</span>
@@ -138,8 +119,68 @@
         </div>
         <div class="card-value" id="val-active-alerts" style="color: var(--accent-rose);">2</div>
         <div class="card-subtext">
-          <span>Immediate security attention required</span>
+          <span>Requires Operator Resolution</span>
         </div>
+      </div>
+
+      <!-- Card 4: High Risk Zones -->
+      <div class="metric-card warning">
+        <div class="card-header-flex">
+          <span class="card-title">High Risk Zones</span>
+          <div class="card-icon" style="color: var(--accent-amber);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+        </div>
+        <div class="card-value" id="val-high-risk-zones" style="color: var(--accent-amber);">2</div>
+        <div class="card-subtext">
+          <span>Zones in WARNING / CRITICAL</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: CAMERA GRID (TASK 10) -->
+    <section class="panel" style="margin-top: 1.5rem;">
+      <div class="panel-header">
+        <h2 class="panel-title" style="display: flex; align-items: center; gap: 0.5rem;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2">
+            <path d="M23 7l-7 5 7 5V7z"></path>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+          </svg>
+          Camera Grid & Telemetry Cards
+        </h2>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <a href="cameras.html" class="btn btn-secondary" style="padding: 0.35rem 0.8rem; font-size: 0.8rem;">Manage Cameras →</a>
+          <button class="btn btn-secondary" style="padding: 0.35rem 0.8rem; font-size: 0.8rem;" onclick="loadCameraGrid()">Refresh Grid</button>
+        </div>
+      </div>
+      <div id="camera-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; margin-top: 1rem;">
+        <div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">Loading security camera feeds...</div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: ALERT PANEL (TASK 10: Critical & Warning alerts + Resolve Action) -->
+    <section class="panel" style="margin-top: 1.5rem; border: 1px solid rgba(244, 63, 94, 0.3);">
+      <div class="panel-header">
+        <h2 class="panel-title" style="display: flex; align-items: center; gap: 0.5rem; color: var(--accent-rose);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          Active Alert Mitigation Panel (Critical & Warning)
+        </h2>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <a href="alerts.html" class="btn btn-secondary" style="padding: 0.35rem 0.8rem; font-size: 0.8rem;">Full Alert Audit →</a>
+          <span class="badge badge-critical" id="panel-active-alert-badge">0 Active</span>
+        </div>
+      </div>
+      
+      <div id="active-alerts-panel" style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
+        <div style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Loading active alarms...</div>
       </div>
     </section>
 
@@ -969,18 +1010,209 @@
       });
     }
 
-    // Connect to WebSocket for live early warning push alerts
-    function initRiskWebSocket() {
+    // =========================================================================
+    // PHASE 6: SECURITY OPERATIONS PLATFORM LOGIC
+    // =========================================================================
+    let currentRole = localStorage.getItem("crowdeye_role") || "OPERATOR";
+
+    function updateRoleUI() {
+      const label = document.getElementById("current-role-label");
+      if (label) label.textContent = currentRole;
+    }
+
+    function toggleRole() {
+      currentRole = currentRole === "ADMIN" ? "OPERATOR" : "ADMIN";
+      localStorage.setItem("crowdeye_role", currentRole);
+      updateRoleUI();
+    }
+
+    async function loadDashboardOverview() {
+      try {
+        const res = await fetch(`${API_BASE}/dashboard/overview`, {
+          headers: { "X-User-Role": currentRole }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const camElem = document.getElementById("val-total-cameras");
+        const pplElem = document.getElementById("val-detected-people");
+        const altElem = document.getElementById("val-active-alerts");
+        const rskElem = document.getElementById("val-high-risk-zones");
+
+        if (camElem) camElem.textContent = data.total_cameras;
+        if (pplElem) pplElem.textContent = Number(data.detected_people).toLocaleString();
+        if (altElem) altElem.textContent = data.active_alerts;
+        if (rskElem) rskElem.textContent = data.high_risk_zones;
+
+        const badge = document.getElementById("panel-active-alert-badge");
+        if (badge) badge.textContent = `${data.active_alerts} Active`;
+      } catch (err) {
+        console.debug("Dashboard overview fetch error:", err);
+      }
+    }
+
+    async function loadCameraGrid() {
+      const container = document.getElementById("camera-grid");
+      if (!container) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/cameras`, {
+          headers: { "X-User-Role": currentRole }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const cameras = await res.json();
+
+        if (!cameras || cameras.length === 0) {
+          container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">No cameras registered.</div>`;
+          return;
+        }
+
+        container.innerHTML = cameras.map(cam => {
+          const status = (cam.status || "ACTIVE").toUpperCase();
+          const statusBadge = status === "ACTIVE" 
+            ? `<span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);">ACTIVE</span>`
+            : (status === "MAINTENANCE" 
+              ? `<span class="badge badge-warning">MAINTENANCE</span>` 
+              : `<span class="badge" style="background: rgba(148, 163, 184, 0.2); color: #94a3b8;">OFFLINE</span>`);
+
+          const risk = (cam.risk_level || "LOW").toUpperCase();
+          const riskBadge = risk === "CRITICAL"
+            ? `<span class="badge badge-critical">CRITICAL</span>`
+            : (risk === "HIGH"
+              ? `<span class="badge badge-warning">HIGH</span>`
+              : `<span class="badge badge-low">${risk}</span>`);
+
+          return `
+            <div class="card" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 1.2rem; display: flex; flex-direction: column; gap: 0.8rem;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                  <h4 style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.2rem;">${escapeHtml(cam.camera_name)}</h4>
+                  <span style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(cam.location || 'Concourse')} • <strong>${escapeHtml(cam.zone || 'Zone A')}</strong></span>
+                </div>
+                ${statusBadge}
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; text-align: center; background: rgba(0,0,0,0.25); padding: 0.6rem; border-radius: 6px; margin-top: 0.4rem;">
+                <div>
+                  <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">People</span>
+                  <strong style="font-size: 1rem; color: var(--text-primary);">${cam.people_count || 0}</strong>
+                </div>
+                <div>
+                  <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">Density</span>
+                  <strong style="font-size: 1rem; color: var(--accent-cyan);">${cam.density || 0} <span style="font-size: 0.7rem;">p/m²</span></strong>
+                </div>
+                <div>
+                  <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">Risk</span>
+                  <div style="margin-top: 0.15rem;">${riskBadge}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        container.innerHTML = `<div style="grid-column: 1 / -1; color: var(--accent-rose); text-align: center; padding: 1.5rem;">Error loading camera grid: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    async function loadAlertPanel() {
+      const panel = document.getElementById("active-alerts-panel");
+      if (!panel) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/alerts?status=ACTIVE`, {
+          headers: { "X-User-Role": currentRole }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const alerts = await res.json();
+
+        const badge = document.getElementById("panel-active-alert-badge");
+        if (badge) badge.textContent = `${alerts.length} Active`;
+
+        if (!alerts || alerts.length === 0) {
+          panel.innerHTML = `<div style="text-align: center; color: var(--accent-emerald); padding: 1.5rem; background: rgba(16, 185, 129, 0.08); border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2);">
+            ✓ All zones operating normally. No active critical or warning alarms.
+          </div>`;
+          return;
+        }
+
+        panel.innerHTML = alerts.map(a => {
+          const isCritical = a.alert_level === "CRITICAL";
+          const levelBadge = isCritical 
+            ? `<span class="badge badge-critical" style="font-size: 0.85rem; padding: 0.25rem 0.65rem;">CRITICAL</span>`
+            : `<span class="badge badge-warning" style="font-size: 0.85rem; padding: 0.25rem 0.65rem;">WARNING</span>`;
+          const borderColor = isCritical ? "rgba(244, 63, 94, 0.4)" : "rgba(245, 158, 11, 0.4)";
+          const bgColor = isCritical ? "rgba(244, 63, 94, 0.08)" : "rgba(245, 158, 11, 0.08)";
+
+          return `
+            <div style="background: ${bgColor}; border: 1px solid ${borderColor}; border-radius: 8px; padding: 0.9rem 1.2rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 1rem; flex-grow: 1;">
+                ${levelBadge}
+                <div>
+                  <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">${escapeHtml(a.message || 'Safety alarm')}</div>
+                  <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">
+                    Camera: <strong>${escapeHtml(a.camera_name || 'Cam North')}</strong> • Zone: <strong>${escapeHtml(a.zone || a.zone_name || 'Zone A')}</strong> • Score: <strong style="color: ${isCritical ? 'var(--accent-rose)' : 'var(--accent-amber)'};">${a.risk_score}</strong>
+                  </div>
+                </div>
+              </div>
+              <button class="btn btn-secondary" style="border-color: var(--accent-emerald); color: var(--accent-emerald); padding: 0.35rem 0.85rem; font-size: 0.85rem;" onclick="resolveAlertAction('${a.id}')">
+                Resolve Incident
+              </button>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        panel.innerHTML = `<div style="text-align: center; color: var(--accent-rose); padding: 1rem;">Failed to fetch active alerts: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    async function resolveAlertAction(alertId) {
+      try {
+        const res = await fetch(`${API_BASE}/alerts/${alertId}/resolve`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "X-User-Role": currentRole
+          }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        refreshSecurityData();
+      } catch (err) {
+        alert(`Error resolving alert: ${err.message}`);
+      }
+    }
+
+    function refreshSecurityData() {
+      loadDashboardOverview();
+      loadCameraGrid();
+      loadAlertPanel();
+    }
+
+    // Connect to WebSocket for live early warning push alerts & Phase 6 Realtime events
+    function initRealtimeWebSocket() {
       const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const wsHost = window.location.port === "8000" ? window.location.host : "127.0.0.1:8000";
-      const wsUrl = `${wsProtocol}//${wsHost}/ws/tracking`;
+      const wsHost = window.location.hostname || "localhost";
+      const wsUrl = `${wsProtocol}//${wsHost}:8000/ws/realtime`;
 
       try {
         const ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          const statusElem = document.getElementById("system-status-indicator");
+          if (statusElem) statusElem.textContent = "CONTROL ROOM CONNECTED";
+          ws.send(JSON.stringify({ action: "subscribe", topic: "alerts" }));
+        };
+
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            if (data.type === "risk_update") {
+            const ev = data.event || data.type;
+
+            if (ev === "alert_created" || ev === "alert_resolved") {
+              refreshSecurityData();
+            } else if (ev === "camera_status") {
+              loadCameraGrid();
+              loadDashboardOverview();
+            } else if (ev === "risk_update") {
               const zoneKey = data.zone;
               const scoreElem = document.getElementById(`risk-score-${zoneKey}`);
               const levelElem = document.getElementById(`risk-level-${zoneKey}`);
@@ -1001,11 +1233,17 @@
               }
             }
           } catch (e) {
-            // Not a JSON risk frame
+            // Non-JSON frame
           }
         };
+
+        ws.onclose = () => {
+          const statusElem = document.getElementById("system-status-indicator");
+          if (statusElem) statusElem.textContent = "STANDBY RECONNECTING";
+          setTimeout(initRealtimeWebSocket, 3000);
+        };
       } catch (err) {
-        console.debug("Risk WebSocket connection standby:", err);
+        console.debug("Realtime WebSocket connection standby:", err);
       }
     }
 
@@ -1017,7 +1255,9 @@
         ctx.fillStyle = "#070a10";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
-      initRiskWebSocket();
+      updateRoleUI();
+      refreshSecurityData();
+      initRealtimeWebSocket();
     });
   </script>
 </body>

@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CrowdEye AI - Camera Management</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20%220%22%20%22100%22%20%22100%22><text y=%22.9em%22 font-size=%2290%22>📹</text></svg>">
+  <style>
+    .camera-management-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    .cam-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      transition: transform var(--transition-fast), border-color var(--transition-fast);
+    }
+    .cam-card:hover {
+      border-color: var(--accent-cyan);
+      transform: translateY(-2px);
+    }
+    .cam-feed-preview {
+      height: 160px;
+      background: #070a10;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .cam-scanline {
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+      animation: scanline 3s linear infinite;
+    }
+    @keyframes scanline {
+      0% { top: 0; }
+      100% { top: 100%; }
+    }
+    .status-badge-active { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .status-badge-maintenance { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .status-badge-offline { background: rgba(148, 163, 184, 0.2); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.4); }
+    .role-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <nav class="navbar">
+    <a href="../index.html" class="nav-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+      </div>
+      <span class="brand-title">CrowdEye AI</span>
+    </a>
+    
+    <div class="nav-links">
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="cameras.html" class="nav-link active">Cameras</a>
+      <a href="alerts.html" class="nav-link">Alerts</a>
+      <a href="analytics.html" class="nav-link">Analytics</a>
+      <a href="monitoring.html" class="nav-link">Monitoring</a>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <div id="role-toggle-btn" class="role-indicator" title="Click to toggle between ADMIN and OPERATOR mode">
+        <span>Current Role:</span>
+        <strong id="current-role-label">ADMIN</strong>
+      </div>
+      <div class="nav-status">
+        <span class="pulse-dot"></span>
+        <span id="socket-status">LIVE WEBSOCKET</span>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <header class="page-header">
+      <div class="header-title">
+        <h1>Camera Infrastructure & Feeds</h1>
+        <p>TASK 11: Real-time CCTV streams, coverage zones, location assignment & status management</p>
+      </div>
+      <div class="header-actions">
+        <button id="open-add-cam-btn" class="btn btn-primary" onclick="toggleAddModal(true)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add Camera (Admin)
+        </button>
+        <button class="btn btn-secondary" onclick="loadCameras()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          Refresh Feeds
+        </button>
+      </div>
+    </header>
+
+    <!-- Role Permission Banner -->
+    <div id="role-banner" style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 8px; padding: 0.8rem 1.2rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+      <div style="font-size: 0.9rem;">
+        <span style="color: var(--accent-cyan); font-weight: 600;">Role-Based Security Active:</span>
+        <span id="role-desc" style="color: var(--text-secondary); margin-left: 0.5rem;">
+          You are currently in <strong>ADMIN</strong> mode. You can add cameras and update camera status.
+        </span>
+      </div>
+      <button class="btn btn-secondary" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;" onclick="toggleRole()">
+        Switch to <span id="switch-target-role">OPERATOR</span>
+      </button>
+    </div>
+
+    <!-- Add Camera Modal / Drawer -->
+    <div id="add-cam-modal" style="display: none; background: var(--bg-surface); border: 1px solid var(--accent-cyan); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: var(--shadow-glow);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="font-family: var(--font-display); color: var(--text-primary);">Register New CCTV Node (ADMIN)</h3>
+        <button class="btn btn-secondary" style="padding: 0.2rem 0.6rem;" onclick="toggleAddModal(false)">✕ Close</button>
+      </div>
+      <form id="add-cam-form" onsubmit="handleAddCamera(event)" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+        <div>
+          <label style="display:block; font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.3rem;">Camera Name</label>
+          <input type="text" id="cam-name" class="form-input" style="width:100%;" placeholder="e.g. Gate South Turnstiles" required>
+        </div>
+        <div>
+          <label style="display:block; font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.3rem;">Zone</label>
+          <select id="cam-zone" class="form-input" style="width:100%;">
+            <option value="Zone A">Zone A (North Gates)</option>
+            <option value="Zone B">Zone B (Food Court / Plaza)</option>
+            <option value="Zone C">Zone C (Stage Area)</option>
+            <option value="Zone D">Zone D (Emergency Exit)</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block; font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.3rem;">Physical Location</label>
+          <input type="text" id="cam-location" class="form-input" style="width:100%;" placeholder="e.g. South Arena Concourse" required>
+        </div>
+        <div>
+          <label style="display:block; font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.3rem;">RTSP / Stream URL</label>
+          <input type="text" id="cam-stream" class="form-input" style="width:100%;" placeholder="rtsp://cctv.crowdeye/cam_south">
+        </div>
+        <div>
+          <label style="display:block; font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.3rem;">Initial Status</label>
+          <select id="cam-status" class="form-input" style="width:100%;">
+            <option value="ACTIVE">ACTIVE</option>
+            <option value="MAINTENANCE">MAINTENANCE</option>
+            <option value="OFFLINE">OFFLINE</option>
+          </select>
+        </div>
+        <div style="display: flex; align-items: flex-end; gap: 0.5rem;">
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.65rem;">Submit Camera Record</button>
+        </div>
+      </form>
+      <div id="add-cam-status-msg" style="margin-top: 0.8rem; font-size: 0.9rem;"></div>
+    </div>
+
+    <!-- Cameras Grid -->
+    <div id="cameras-container" class="camera-management-grid">
+      <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-muted);">
+        Loading security camera feeds...
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    CrowdEye AI © 2026. Security Control Room Platform • Phase 6 Camera Management Active.
+  </footer>
+
+  <script>
+    const API_BASE = "http://localhost:8000";
+    let currentRole = localStorage.getItem("crowdeye_role") || "ADMIN";
+
+    function updateRoleUI() {
+      document.getElementById("current-role-label").textContent = currentRole;
+      const target = currentRole === "ADMIN" ? "OPERATOR" : "ADMIN";
+      document.getElementById("switch-target-role").textContent = target;
+      const desc = document.getElementById("role-desc");
+      if (currentRole === "ADMIN") {
+        desc.innerHTML = `You are currently in <strong>ADMIN</strong> mode. You can add cameras and modify statuses.`;
+      } else {
+        desc.innerHTML = `You are in <strong>OPERATOR</strong> mode. Camera creation and modifications are restricted (403 Forbidden).`;
+      }
+    }
+
+    function toggleRole() {
+      currentRole = currentRole === "ADMIN" ? "OPERATOR" : "ADMIN";
+      localStorage.setItem("crowdeye_role", currentRole);
+      updateRoleUI();
+    }
+
+    function toggleAddModal(show) {
+      document.getElementById("add-cam-modal").style.display = show ? "block" : "none";
+    }
+
+    async function loadCameras() {
+      const container = document.getElementById("cameras-container");
+      try {
+        const res = await fetch(`${API_BASE}/cameras`, {
+          headers: { "X-User-Role": currentRole }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const cameras = await res.json();
+
+        if (!cameras || cameras.length === 0) {
+          container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-muted);">No cameras found. Click "Add Camera" to configure.</div>`;
+          return;
+        }
+
+        container.innerHTML = cameras.map(cam => {
+          const statusLower = (cam.status || "ACTIVE").toLowerCase();
+          const badgeClass = statusLower === "active" ? "status-badge-active" : (statusLower === "maintenance" ? "status-badge-maintenance" : "status-badge-offline");
+          const riskColor = cam.risk_level === "CRITICAL" ? "var(--accent-rose)" : (cam.risk_level === "HIGH" ? "var(--accent-amber)" : "var(--accent-emerald)");
+
+          return `
+            <div class="cam-card" id="cam-card-${cam.id}">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                  <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary);">${cam.camera_name}</h3>
+                  <p style="font-size: 0.8rem; color: var(--text-secondary);">${cam.location || 'General Venue'} • <strong>${cam.zone || 'Zone A'}</strong></p>
+                </div>
+                <span class="badge ${badgeClass}" id="status-badge-${cam.id}">${cam.status || 'ACTIVE'}</span>
+              </div>
+
+              <div class="cam-feed-preview">
+                <div class="cam-scanline"></div>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--text-muted);">
+                  <path d="M23 7l-7 5 7 5V7z"></path>
+                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                </svg>
+                <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-cyan); margin-top: 0.5rem;">
+                  ${cam.stream_url ? 'RTSP LIVE' : 'SIMULATED FEED'} • 1080p
+                </span>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; text-align: center; background: rgba(0,0,0,0.25); padding: 0.6rem; border-radius: 6px;">
+                <div>
+                  <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">People</span>
+                  <strong style="font-size: 1.05rem; color: var(--text-primary);">${cam.people_count || 0}</strong>
+                </div>
+                <div>
+                  <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">Density</span>
+                  <strong style="font-size: 1.05rem; color: var(--accent-cyan);">${cam.density || 0} <span style="font-size: 0.7rem;">p/m²</span></strong>
+                </div>
+                <div>
+                  <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">Risk</span>
+                  <strong style="font-size: 1.05rem; color: ${riskColor};">${cam.risk_level || 'LOW'}</strong>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-subtle); padding-top: 0.8rem;">
+                <label style="font-size: 0.8rem; color: var(--text-secondary);">Set Status:</label>
+                <select class="form-input" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onchange="updateCamStatus('${cam.id}', this.value)">
+                  <option value="ACTIVE" ${cam.status === 'ACTIVE' ? 'selected' : ''}>ACTIVE</option>
+                  <option value="MAINTENANCE" ${cam.status === 'MAINTENANCE' ? 'selected' : ''}>MAINTENANCE</option>
+                  <option value="OFFLINE" ${cam.status === 'OFFLINE' ? 'selected' : ''}>OFFLINE</option>
+                </select>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        container.innerHTML = `<div style="grid-column: 1 / -1; color: var(--accent-rose); text-align: center; padding: 2rem;">Error loading cameras: ${err.message}</div>`;
+      }
+    }
+
+    async function handleAddCamera(e) {
+      e.preventDefault();
+      const statusMsg = document.getElementById("add-cam-status-msg");
+      statusMsg.innerHTML = `<span style="color: var(--accent-cyan);">Submitting camera record...</span>`;
+
+      const payload = {
+        camera_name: document.getElementById("cam-name").value,
+        zone: document.getElementById("cam-zone").value,
+        location: document.getElementById("cam-location").value,
+        stream_url: document.getElementById("cam-stream").value,
+        status: document.getElementById("cam-status").value
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/cameras`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-User-Role": currentRole
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.status === 403) {
+          statusMsg.innerHTML = `<span style="color: var(--accent-rose); font-weight: bold;">Permission Denied (403): Only ADMIN role can add cameras!</span>`;
+          return;
+        }
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.detail || `HTTP ${res.status}`);
+        }
+
+        statusMsg.innerHTML = `<span style="color: var(--accent-emerald);">Camera added successfully!</span>`;
+        document.getElementById("add-cam-form").reset();
+        setTimeout(() => {
+          toggleAddModal(false);
+          loadCameras();
+        }, 1200);
+      } catch (err) {
+        statusMsg.innerHTML = `<span style="color: var(--accent-rose);">Failed: ${err.message}</span>`;
+      }
+    }
+
+    async function updateCamStatus(cameraId, newStatus) {
+      try {
+        const res = await fetch(`${API_BASE}/cameras/${cameraId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "X-User-Role": currentRole
+          },
+          body: JSON.stringify({ status: newStatus })
+        });
+
+        if (res.status === 403) {
+          alert("Permission Denied (403): Only ADMIN role can modify camera status! Switch to ADMIN to proceed.");
+          loadCameras();
+          return;
+        }
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        loadCameras();
+      } catch (err) {
+        alert(`Error updating camera status: ${err.message}`);
+      }
+    }
+
+    // Connect to WebSocket for camera status broadcasts
+    function initWebSocket() {
+      const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const wsHost = window.location.hostname || "localhost";
+      const ws = new WebSocket(`${wsProtocol}//${wsHost}:8000/ws/realtime`);
+
+      ws.onopen = () => {
+        document.getElementById("socket-status").textContent = "CONNECTED";
+        ws.send(JSON.stringify({ action: "subscribe", topic: "alerts" }));
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.event === "camera_status") {
+            loadCameras();
+          }
+        } catch (e) {}
+      };
+
+      ws.onclose = () => {
+        document.getElementById("socket-status").textContent = "DISCONNECTED";
+        setTimeout(initWebSocket, 3000);
+      };
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      updateRoleUI();
+      loadCameras();
+      initWebSocket();
+    });
+  </script>
+</body>
+</html>

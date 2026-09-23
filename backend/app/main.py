@@ -7,6 +7,10 @@ from app.routes.detection import router as detection_router
 from app.routes.tracking import router as tracking_router
 from app.routes.density import router as density_router
 from app.routes.risk import router as risk_router
+from app.routes.dashboard import router as dashboard_router
+from app.routes.cameras import router as cameras_router
+from app.routes.alerts import router as alerts_router
+from app.routes.analytics import router as analytics_router
 from app.websocket.tracking_socket import router as websocket_router
 
 # Initialize FastAPI application
@@ -38,6 +42,10 @@ app.include_router(density_router)
 app.include_router(density_router, prefix="/api/v1")
 app.include_router(risk_router)
 app.include_router(risk_router, prefix="/api/v1")
+app.include_router(dashboard_router)
+app.include_router(cameras_router)
+app.include_router(alerts_router)
+app.include_router(analytics_router)
 app.include_router(websocket_router)
 
 

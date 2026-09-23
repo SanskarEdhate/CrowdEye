@@ -1,279 +1,232 @@
 # CrowdEye AI - End-to-End System Architecture
 
-This document specifies the technical blueprint for the **CrowdEye AI** platform, describing the data flow, security model, and structural boundaries across all tiers.
+This document specifies the technical blueprint for the **CrowdEye AI** Security Operations Platform, describing data pipelines, AI models, security enforcement, alert management, and dashboard visualization.
 
 ---
 
-## 1. High-Level Architecture Diagram
+## 1. System Operations Pipeline Flow (Phase 6)
 
 ```
-+-------------------------------------------------------------+
-|                      PRESENTATION TIER                      |
-|                  Vanilla HTML5 / CSS3 / JS                  |
-|  - Real-time DeepSORT Canvas (Bounding Boxes, Trajectories) |
-|  - Telemetry Dashboard (Active Tracks, Direction, Velocity) |
-|  - Leaflet GIS, Chart.js Analytics                         |
-+------------------------------+------------------------------+
-                               |
-                               | REST Upload / Status Polling + WebSocket (/ws/tracking)
-                               v
-+-------------------------------------------------------------+
-|                     APPLICATION TIER                        |
-|                     FastAPI + Uvicorn                       |
-|   - POST /tracking/start, GET /tracking/status/{job_id}     |
-|   - GET /tracking/result/{job_id}, WebSocket Streaming      |
-|   - TrackingWorker BackgroundTasks Engine                   |
-+------------------------------+------------------------------+
-                               |
-                               | Spawns DeepSORT Tracking Worker
-                               v
-+-------------------------------------------------------------+
-|                 AI PERCEPTION & TRACKING WORKER (Phase 3)   |
-|  1. OpenCV Video Frame Reader                               |
-|  2. YOLOv8 Detection (Class 0: Person)                      |
-|  3. DeepSORT Appearance-based Multi-Object Tracker          |
-|     (MobileNet Embedder, max_age=30, n_init=2)              |
-|  4. TrackHistory (10-second Rolling Spatiotemporal Memory)  |
-|  5. MovementAnalyzer (8-Way Direction + px/s Velocity)      |
-+------------------------------+------------------------------+
-                               |
-                               | Telemetry Ingestion (5s Batches)
-                               v
-+-------------------------------------------------------------+
-|                        DATA TIER                            |
-|                   Supabase PostgreSQL                       |
-|   - tracking_jobs (Job Status, Progress, Total Unique)      |
-|   - person_tracking (x, y, direction, speed, timestamp)     |
-|   - crowd_logs, users, events, cameras, alerts + RLS        |
-+-------------------------------------------------------------+
-```
-
----
-
-## 1.1 Video Ingestion & Tracking Pipeline Flow (Phase 2 & 3)
-
-```
-[ CCTV Video / Recording (.mp4) ]
-            |
-            v
-[ FastAPI: POST /tracking/start ]
-            |
-            v
-[ TrackingService: Insert tracking_jobs (status: 'queued') ]
-            |
-            v
-[ FastAPI BackgroundTasks: TrackingWorker ]
-            |
-            v
-[ Frame Extraction: cv2.VideoCapture ]
-            |
-            v
-[ YOLOv8: Person Detections (Class 0, Conf >= 0.45) ]
-            |
-            v
-[ DeepSORT Tracker: Feature Extraction (MobileNet) + Kalman Filter ]
-            |
-            v
-[ TrackHistory: In-memory coordinate buffer (10s sliding window) ]
-            |
-            v
-[ MovementAnalyzer: Direction (8-way) + Relative Speed (px/s) ]
-            |
-      +-----+-------------------------------+
-      |                                     |
-      v (Real-time Broadcast)               v (Batched every 5s)
-[ TrackingConnectionManager ]        [ TrackingService.batch_insert() ]
-      |                                     |
-      v                                     v
-[ WebSocket: /ws/tracking/{job_id} ] [ Supabase: person_tracking ]
-      |                                     |
-      v                                     v
-[ Frontend HTML5 Canvas (Visualizer) ] [ Supabase: tracking_jobs ('completed') ]
+        +-------------------------------------+
+        |               Camera                |
+        |  (RTSP Stream / CCTV Video Feed)    |
+        +------------------+------------------+
+                           |
+                           v
+        +-------------------------------------+
+        |              AI Engine              |
+        |   - YOLOv8 Person Detection         |
+        |   - DeepSORT Multi-Object Tracker   |
+        |   - Perspective Homography Correct. |
+        |   - Zone Density Matrix (A - F)     |
+        +------------------+------------------+
+                           |
+                           v
+        +-------------------------------------+
+        |             Risk Engine             |
+        |   - 10-Second Temporal Rolling Window
+        |   - Normalized Features (D, S, C, G)|
+        |   - Deterministic Formula (0-100)   |
+        |   - Explainability Reason Generator |
+        +------------------+------------------+
+                           |
+                           v
+        +-------------------------------------+
+        |            Alert Manager            |
+        |   - LOW: No alert                   |
+        |   - MEDIUM: Monitoring only         |
+        |   - HIGH: WARNING alert             |
+        |   - CRITICAL: CRITICAL alert        |
+        |   - (camera_id, zone_id) Dedup      |
+        +------------------+------------------+
+                           |
+                           v
+        +-------------------------------------+
+        |         Operator Dashboard          |
+        |   - Realtime WebSocket Subscriptions|
+        |   - Camera Telemetry Grid (Status)  |
+        |   - Active Alarm Mitigation Panel   |
+        |   - Incident Resolution Action      |
+        |   - 1-Minute Aggregated Analytics   |
+        +-------------------------------------+
 ```
 
 ---
 
-## 1.2 Phase 4: Crowd Density & Zone Heatmap Pipeline Flow
+## 2. High-Level Component Architecture
 
 ```
-[ CCTV Video / Recording (.mp4) ]
-            |
-            v
-[ FastAPI: POST /density/start ]
-            |
-            v
-[ DensityService: Insert density_jobs (status: 'queued') ]
-            |
-            v
-[ FastAPI BackgroundTasks: DensityWorker ]
-            |
-            v
-[ YOLOv8 Person Detection (COCO Class 0) ]
-            |
-            v
-[ DeepSORT Multi-Object Tracking (MobileNet Embedder) ]
-            |
-            v
-[ Person Centroid Extraction: (cx, cy) ]
-            |
-            v
-[ Camera Perspective Correction (OpenCV Homography Matrix) ]
-            |
-            v
-[ ZoneManager: Point-in-Polygon Spatial Mapping (Zones A - F) ]
-            |
-            v
-[ DensityEstimator: normalized score = people_count / zone_capacity ]
-            |
-            v
-[ 4-Tier Classification: LOW (0-40%), MEDIUM (40-70%), HIGH (70-90%), CRITICAL (90%+) ]
-            |
-      +-----+-------------------------------+
-      |                                     |
-      | (If Density > 0.70 or Low Conf)    | (Every Frame)
-      v                                     v
-[ Optional CSRNet Verification ]     [ Dynamic HeatmapGenerator (Gaussian Matrix) ]
-      |                                     |
-      +-----------------+-------------------+
-                        |
-                        +-------------------------------+
-                        |                               |
-                        v (5-Second Batches)            v (Result Poll)
-          [ Supabase: crowd_density ]      [ GET /density/result/{job_id} ]
-                        |                               |
-                        v                               v
-          [ Supabase: density_jobs ]        [ Frontend Dashboard: Zone Cards & Canvas Heatmap ]
++---------------------------------------------------------------------------------+
+|                               PRESENTATION TIER                                 |
+|               Vanilla HTML5 / CSS3 / ES6 JavaScript / Chart.js                  |
+|  - dashboard.html: Overview Cards, Camera Grid, Active Incident Alert Panel     |
+|  - cameras.html: CCTV Node Registration, Zone & Location Mapping, Status Switch |
+|  - alerts.html: Audit History Log, Severity Filtering, Incident Resolution      |
+|  - analytics.html: 1-Minute Aggregated Headcount & Risk Timelines, Zone Analysis|
++---------------------------------------+-----------------------------------------+
+                                        |
+                                        | REST APIs + WebSocket (/ws/realtime)
+                                        v
++---------------------------------------------------------------------------------+
+|                               APPLICATION TIER                                  |
+|                             FastAPI + Uvicorn                                   |
+|   - Authentication & RBAC: ADMIN vs OPERATOR Roles                              |
+|   - Dashboard: GET /dashboard/overview                                          |
+|   - Cameras: POST /cameras (Admin), GET /cameras, PUT /cameras/{id} (Admin)     |
+|   - Alerts: GET /alerts, PUT /alerts/{id}/resolve                               |
+|   - Analytics: GET /analytics/timeline (1-min avg), GET /analytics/zones        |
+|   - WebSocket Manager: Realtime topic subscriptions (camera, zone, alerts)      |
++---------------------------------------+-----------------------------------------+
+                                        |
+                                        v
++---------------------------------------------------------------------------------+
+|                             AI & RISK PIPELINE                                  |
+|  1. Detection: YOLOv8 Person Detection (COCO Class 0)                           |
+|  2. Tracking: DeepSORT with MobileNet Embedder & Kalman Filter                  |
+|  3. Density: Point-in-polygon mapping + Perspective Homography + Heatmaps       |
+|  4. Risk: Score = 0.40*Density + 0.25*Speed + 0.20*Chaos + 0.15*Growth          |
+|  5. Alert Service: Rule-based thresholding, duplicate suppression, dispatch     |
++---------------------------------------+-----------------------------------------+
+                                        |
+                                        v
++---------------------------------------------------------------------------------+
+|                                 DATA TIER                                       |
+|                            Supabase PostgreSQL                                  |
+|   - cameras: id, event_id, camera_name, zone, stream_url, location, status,     |
+|              zone_config                                                        |
+|   - alerts: id, camera_id, zone_id, risk_score, alert_level, message, status,   |
+|             created_at, resolved_at + Partial UNIQUE Index for duplicate prot.  |
+|   - profiles: id, role ('ADMIN', 'OPERATOR') + Row Level Security (RLS)         |
+|   - crowd_risk, crowd_density, person_tracking, crowd_logs, events, users       |
++---------------------------------------------------------------------------------+
 ```
 
 ---
 
-## 1.3 Phase 5: Crowd Risk Prediction & Early Warning Pipeline Flow
+## 3. Role-Based Access Control (RBAC) & Security Architecture
+
+The platform enforces two distinct operational roles backed by Supabase Auth and database RLS:
+
+| Role | Permissions | Restricted Actions |
+| :--- | :--- | :--- |
+| **ADMIN** | • Register new CCTV cameras (`POST /cameras`)<br>• Update camera configuration & status (`PUT /cameras/{id}`)<br>• View dashboard overview and camera feeds<br>• Manage and resolve all alerts | None |
+| **OPERATOR** | • View security dashboard and live metrics<br>• Monitor camera feeds and zone statuses<br>• View active alerts and audit history<br>• Resolve active incident alerts (`PUT /alerts/{id}/resolve`) | • Adding cameras (403 Forbidden)<br>• Modifying camera properties or status (403 Forbidden) |
+
+### Row Level Security (RLS) Implementation:
+- `public.cameras`:
+  - `SELECT`: Permitted for all authenticated users (`ADMIN` and `OPERATOR`).
+  - `INSERT`, `UPDATE`, `DELETE`: Restricted to `ADMIN` via `public.is_admin()` security definer function.
+- `public.alerts`:
+  - `SELECT`: Permitted for all authenticated users.
+  - `UPDATE`: Permitted for authenticated users when modifying status to `RESOLVED` or `ACKNOWLEDGED`.
+  - `ALL`: Full access granted to `service_role`.
+
+---
+
+## 4. Alert Workflow & Duplicate Protection Architecture
 
 ```
-[ CCTV Video Stream / Stored Telemetry ]
-            |
-            v
-[ YOLOv8 Person Detection (COCO Class 0) ]
-            |
-            v
-[ DeepSORT Multi-Object Tracking (MobileNet) ]
-            |
-            v
-[ Movement Features (8-Way Direction, px/s Velocity) ]
-            |
-            v
-[ Density Engine (Perspective Homography, Zone Mapping A-F) ]
-            |
-            v
-[ 10-Second Temporal Rolling Window Aggregation ]
-            |
-            v
-[ FeatureExtractor (Normalized 0 - 100) ]
-  - Density Norm: (people / capacity) * 100
-  - Growth Rate Norm: min(100, (current - prev)/prev * 100)
-  - Speed Norm: (current_speed / 150 px/s) * 100
-  - Chaos Norm: Circular Statistics (1 - R) * 100
-            |
-            v
-[ RiskEngine: Deterministic Weighted Score (0 - 100) ]
-  Score = 0.40*Density + 0.25*Speed + 0.20*Chaos + 0.15*Growth
-            |
-            v
-[ 4-Tier Risk Classification: LOW (0-30), MEDIUM (31-60), HIGH (61-80), CRITICAL (81-100) ]
-            |
-            v
-[ RiskExplainer: Diagnostic Human-Readable Safety Justifications ]
-            |
-      +-----+-------------------------------+
-      |                                     |
-      v (Persistent Database)               v (Live Push & REST)
-[ Supabase: crowd_risk ]             [ WebSocket: /ws/tracking (risk_update) ]
-      |                                     |
-      v                                     v
-[ Supabase: risk_jobs ]              [ Frontend Dashboard: Risk Monitoring Panel ]
+[ Risk Engine Score ]
+          |
+          +---> Score <= 30 (LOW): No Alert
+          |
+          +---> Score 31 - 60 (MEDIUM): Monitoring Only (No Alert)
+          |
+          +---> Score 61 - 80 (HIGH): WARNING Alert Generated
+          |
+          +---> Score 81 - 100 (CRITICAL): CRITICAL Alert Generated
+                         |
+                         v
+          [ Duplicate Protection Check ]
+          Query: SELECT * FROM alerts WHERE (camera_id, zone_id) AND status = 'ACTIVE'
+                         |
+          +--------------+--------------+
+          |                             |
+          | (Active Alert Exists)       | (No Active Alert)
+          v                             v
+[ Suppress Duplicate Insert ]   [ Insert New Alert Record ]
+[ Update Active Risk Score  ]   - id: UUID
+                                - alert_level: WARNING / CRITICAL
+                                - status: 'ACTIVE'
+                                        |
+                                        v
+                                [ Realtime WebSocket Broadcast ]
+                                - event: 'alert_created'
+                                - topic: 'alerts'
+                                        |
+                                        v
+                                [ Control Room Alert Panel Update ]
+                                        |
+                                        v (Operator presses "Resolve")
+                                [ PUT /alerts/{id}/resolve ]
+                                - status -> 'RESOLVED'
+                                - resolved_at -> timestamp
+                                - event: 'alert_resolved'
 ```
 
-
-
-```
-[ CCTV Video / Recording ]
-            |
-            v
-[ FastAPI: POST /detection/video ]
-            |
-            v
-[ JobService: Create job_id, Status: queued ]
-            |
-            v
-[ FastAPI BackgroundTasks Worker ]
-            |
-            v
-[ OpenCV cv2.VideoCapture (Headless Frame Reader) ]
-            |
-            v
-[ YOLOv8 Person Detection (COCO Class 0, Conf >= 0.45) ]
-            |
-            v
-[ Aggregation: Headcount, Avg People, Max People, Duration ]
-            |
-            v
-[ Supabase crowd_logs Insertion (status: 'DETECTED') ]
-            |
-            v
-[ Frontend Client Status Polling & Result Display ]
+### Database Duplicate Protection:
+PostgreSQL partial unique index enforces database-level integrity:
+```sql
+CREATE UNIQUE INDEX idx_active_alert_unique
+ON public.alerts (camera_id, COALESCE(zone_id, '00000000-0000-0000-0000-000000000000'::uuid))
+WHERE status = 'ACTIVE';
 ```
 
 ---
 
-## 2. Core Components & Tier Breakdown
+## 5. Realtime WebSocket Topic Subscriptions
 
-### 2.1 Frontend Tier (Client-Side)
-- **Role**: Operator interface for command centers and security guards on duty.
-- **Technologies**: Vanilla HTML5, CSS3, ES6 JavaScript, Chart.js, Leaflet.js.
-- **Functionality**:
-  - Live metric visualization: Total headcount, area density ($\text{ppl/m}^2$), risk index ($0.0 - 1.0$), and active alert counters.
-  - Interactive GIS venue layout: Leaflet map representing CCTV coverage radiuses, heat distribution, and emergency exit routes.
-  - Direct communication via the Fetch API with the FastAPI backend.
-  - Direct query of read-only telemetry from Supabase using the public `anonKey` with **Row Level Security (RLS)** constraints.
+Endpoints:
+- `/ws/realtime`: Main subscription and event broadcast hub.
+- `/ws/alerts`: Dedicated alert notification stream.
+- `/ws/tracking`: Video telemetry and person movement stream.
 
-### 2.2 Application Backend Tier (FastAPI)
-- **Role**: API gateway, operational business logic, alert aggregation, and client validation.
-- **Technologies**: Python 3.11+, FastAPI, Uvicorn, Pydantic, Python-Dotenv.
-- **Functionality**:
-  - Exposes REST endpoints (`/api/v1/crowd/status`, `/api/v1/alerts`, `/api/v1/events`).
-  - CORS middleware allowing secure cross-origin requests from distributed operator terminals.
-  - Securely loads and protects private credentials (`SUPABASE_SERVICE_KEY`) to interact with Supabase with administrative rights.
-  - Verifies database health and manages alert dispatch logic.
+Supported Topics:
+- `camera:{camera_id}`: Stream events specific to a physical camera.
+- `zone:{zone_id}`: Stream events specific to a spatial sector.
+- `alerts`: Stream all alert creations and resolutions across the entire venue.
 
-### 2.3 Database Tier (Supabase PostgreSQL)
-- **Role**: Persistent transactional storage and real-time subscription engine.
-- **Tables**:
-  1. `users`: Operator profiles and role assignments.
-  2. `events`: Monitored venues, dates, and operational phases.
-  3. `cameras`: Registered video capture sources mapped to venue zones.
-  4. `crowd_logs`: Time-series crowd headcount, density, and risk telemetry.
-  5. `alerts`: Security alarms triggered by high-density surges and stampede indicators.
-- **Security & RLS**:
-  - All 5 tables have Row Level Security enabled.
-  - Public anonymous users are blocked from mutating data.
-  - Authenticated operators can read events, cameras, crowd telemetry, and alerts.
-  - Only the backend service key can write to `crowd_logs` and generate `alerts`, preventing unauthorized client data tampering.
+Event Schemas:
+```json
+// Event: alert_created
+{
+  "event": "alert_created",
+  "alert_id": "d0ef82fe-e4ea-405a-a49e-aa1b3894553c",
+  "camera": "Gate North Turnstiles",
+  "zone": "Zone A",
+  "level": "CRITICAL",
+  "message": "High crowd risk detected in Zone Zone A",
+  "risk_score": 88.5,
+  "created_at": "2026-09-23T12:00:00Z"
+}
 
-### 2.4 AI Engine Tier (Phase 2 Roadmap)
-- **Role**: Video feed ingestion, deep learning computer vision, trajectory tracking, and automated risk scoring.
-- **Components**:
-  - **YOLOv8**: Real-time object detection for individual person localization.
-  - **DeepSORT**: Multi-target tracking algorithm preserving person IDs across frames to measure flow velocity and directional anomalies.
-  - **CSRNet**: Congested Scene Recognition Network utilizing dilated convolutions to generate high-fidelity crowd density heatmaps in extremely crowded scenes.
-  - **Risk Assessment Model**: Evaluates sudden density accumulation ($> 3.5 \text{ ppl/m}^2$), counter-flow collisions, and exit bottlenecking. Upon detecting threshold breaches, the worker communicates with the backend or directly writes alerts to Supabase using the service role key.
+// Event: alert_resolved
+{
+  "event": "alert_resolved",
+  "alert_id": "d0ef82fe-e4ea-405a-a49e-aa1b3894553c",
+  "status": "RESOLVED",
+  "resolved_at": "2026-09-23T12:05:12Z",
+  "resolved_by": "operator"
+}
+
+// Event: camera_status
+{
+  "event": "camera_status",
+  "camera_id": "11111111-1111-1111-1111-111111111101",
+  "status": "MAINTENANCE",
+  "camera_name": "Gate North Turnstiles"
+}
+```
 
 ---
 
-## 3. Data Flow Progression
+## 6. Analytics 1-Minute Aggregation Pipeline
 
-1. **Video Ingestion (Phase 2)**: CCTV cameras stream RTSP feeds to the AI Worker node.
-2. **Inference Execution**: YOLOv8 and CSRNet compute instantaneous crowd counts and density maps.
-3. **Telemetry Ingestion**: The AI inference pipeline packages results into a structured payload and inserts them into `crowd_logs` via the Supabase Service Role client.
-4. **Alert Generation**: If risk scores exceed critical thresholds ($>0.75$), an alert record is created in the `alerts` table.
-5. **Real-time Propagation**: Supabase broadcasts the new alert to connected operator dashboards.
-6. **Command Dashboard**: The operator dashboard updates the metric cards, plots new density points on Chart.js, updates the Leaflet zone markers, and notifies dispatchers.
+Raw telemetry gathered at 5-second intervals from YOLOv8, DeepSORT, and the Density Homography Engine is aggregated into 1-minute averages by `AnalyticsService`:
+1. Raw logs are queried across a sliding time window (15, 30, or 60 minutes).
+2. Data is bucketed into `YYYY-MM-DDTHH:MM:00Z` timestamps.
+3. For each bucket, the service computes:
+   - Average headcount (`avg_people_count`)
+   - Average spatial density (`avg_density`)
+   - Average composite risk score (`avg_risk_score`)
+4. Served via `GET /analytics/timeline` to Chart.js for responsive multi-timeline rendering.

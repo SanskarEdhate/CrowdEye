@@ -142,6 +142,13 @@ def run_risk_worker(job_id: str, camera_id: Optional[str] = None):
         RiskService.insert_risk_records(db_records)
         RiskService.save_risk_result(camera_id or "default", evaluated_zones)
 
+        # 8. Phase 6 Alert Engine Integration: Evaluate risk output for Warning/Critical alerts
+        try:
+            from app.services.alert_service import AlertService
+            AlertService.evaluate_and_create_alert(evaluated_zones, camera_id=camera_id)
+        except Exception as e:
+            logger.debug(f"Alert service evaluation in worker: {e}")
+
         RiskService.update_risk_job(
             job_id,
             status="completed",

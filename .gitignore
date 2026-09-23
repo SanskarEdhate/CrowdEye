@@ -2,6 +2,7 @@
 .env
 .env.local
 *.env
+backend/.env
 
 # Dependencies & Virtual Envs
 venv/
@@ -33,6 +34,12 @@ yolov8n.pt
 datasets/
 videos/
 !videos/.gitkeep
+*.mp4
+*.avi
+scratch/*.mp4
+scratch/*.avi
+scratch/*.jpg
+scratch/*.png
 
 # IDE & OS
 .vscode/
